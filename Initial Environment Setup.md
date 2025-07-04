@@ -55,10 +55,6 @@
   meson build --buildtype release
   ninja -vC build install
   
-  # 6. (保存备用) 验证PSNR计算的命令模板
-  # 此命令用于后续对编码视频进行质量评估
-  # << ... >> 为占位符，使用时需替换为实际参数
-  build/tools/vmaf -r <<reference_video.yuv>> -d <<distorted_video.yuv>> -w <<width>> -h <<height>> -p 420 -b 8 --json --threads=1 --output metrics.json --feature psnr
    ```
 
    你现在还没有编码失真后的视频（distorted video），所以请将这条命令保存好。等你用x265成功编码出第一个视频后，就可以用它来计算PSNR值，验证整个流程。
