@@ -65,30 +65,23 @@
    ```
 
 ## x265 command to do All-Intra encoding with x265 encoder
-constant QP coding 
 
 All-Intra Encoding:`--keyint, -I <integer>` `--keyint 1` All-Intra  
 Constant QP Coding:`--qp, -q <integer>`
+
+Rate control -CQP
+
+Code configm -All intra
+
+QP_VALUES = [22, 27, 32, 37]
+
 ```sh
-# 示例：对一个1920x1080, 30fps的视频进行“全帧内”和“固定QP”编码
-
-# 变量定义 (请根据实际视频信息修改)
-INPUT_VIDEO="~/thesis_videos/your_video_file_1920x1080_30.yuv"
-RESOLUTION="1920x1080"
-FPS="30"
-QP_VALUE="27" # 例如，使用QP=27
-OUTPUT_VIDEO="output_intra_qp${QP_VALUE}.hevc"
-
-# 执行编码的完整命令
-# --keyint 1 : 设置为全帧内编码
-# --qp ${QP_VALUE} : 设置为固定QP编码
-# -o : 指定输出文件名
-
-./x265_git/source/x265 \
---input ${INPUT_VIDEO} \
---input-res ${RESOLUTION} \
---fps ${FPS} \
---keyint 1 \
---qp ${QP_VALUE} \
--o ${OUTPUT_VIDEO}
+x265 \
+  --input ControlledBurn_1280x720p30_420.yuv \
+  --input-res 1280x720 \
+  --fps 30 \
+  --frames 129 \
+  --intra --keyint 1 --min-keyint 1 --bframes 0 --scenecut 0 \
+  --qp <QP> --no-opt-qp-pps --ipratio 1.0 \
+  -o output.265
 ```
