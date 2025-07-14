@@ -6,16 +6,32 @@ The x265 software encoder (version 5.1.4) was utilized for all encoding experime
 x265 --input ~/thesis_videos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv   --input-res 1280x720   --fps 30   --frames 129   --intra --keyint 1 --min-keyint 1  --bframes 0 --scenecut 0 --qp 27  --no-opt-qp-pps   --ipratio 1.0  -o ControlledBurn_test_output.265
 ```
 
-Two distinct video sequences were used as input sources to cover different resolutions and content complexities:
+5 distinct video sequences were used as input sources to cover different resolutions and content complexities:
 * **4K Sequence:** `BoxingPractice_3840x2160_5994fps_8bit_420.yuv`
     * Resolution: 3840x2160
     * Frame Rate: 59.94 fps
     * Total Frames: 130 frames
-* **HD Sequence:** `ControlledBurn_1280x720p30_420.yuv`
+    * Path:/home/or16ixuv/thesis_videos/aom_8bit/a1_4k/BoxingPractice_3840x2160_5994fps_8bit_420.yuv
+* **2K Sequence:** `Aerial3200_1920x1080_5994_8bit_420.yuv`
+    * Resolution: 1920x1080
+    * Frame Rate: 59.94 fps
+    * Total Frames: 130 frames
+    * Path:/home/or16ixuv/thesis_videos/aom_8bit/a2_2k/Aerial3200_1920x1080_5994_8bit_420.yuv
+* **720p Sequence:** `ControlledBurn_1280x720p30_420.yuv`
     * Resolution: 1280x720
     * Frame Rate: 30 fps
     * Total Frames: 130 frames
-
+    * Path:/home/or16ixuv/thesis_videos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv
+* **360p Sequence:** `SnowMountain_640x360_2997.yuv`
+    * Resolution: 640x360
+    * Frame Rate: 29.97 fps
+    * Total Frames: 130 frames
+    * Path:/home/or16ixuv/thesis_videos/aom_8bit/a4_360p/SnowMountain_640x360_2997.yuv
+* **270p Sequence:** `SparksElevator_480x270p_5994_8bit.yuv`
+    * Resolution: 480x270
+    * Frame Rate: 59.94 fps
+    * Total Frames: 130 frames
+    * Path:/home/or16ixuv/thesis_videos/aom_8bit/a5_270p/SparksElevator_480x270p_5994_8bit.yuv
 For each video sequence, a matrix of encoding configurations was tested:
 * **Quantization Parameters (QP):** 22, 27, 32, 37
 * **Presets:** `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`, `placebo`
