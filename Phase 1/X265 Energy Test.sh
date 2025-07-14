@@ -1,91 +1,74 @@
 #!/bin/bash
 
-# === Pilot Energy Measurement Script (x265 All-Intra) ===
+# ---------- 参数定义 ----------
+N_REPEATS=10
+OUTPUT_CSV="energy_measurements.csv"
 
-INPUT_YUV="$HOME/thesis_videos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv"
-WIDTH=1280
-HEIGHT=720
-FRAMES=130
-FPS=30
+QPS=(22 27 32 37)
+PRESETS=(ultrafast superfast veryfast faster fast medium slow slower veryslow placebo)
 
-QPS=(22 32 37)
-PRESETS=(ultrafast medium veryslow)
-REPEAT=10
+# 视频配置：名称=路径 分辨率 宽 高 帧率 帧数
+declare -A VIDEOS
+VIDEOS["ControlledBurn_720p"]="/home/or16ixuv/thesis_videos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv 1280 720 30 130"
+VIDEOS["Aerial3200_2k"]="/home/or16ixuv/thesis_videos/aom_8bit/a2_2k/Aerial3200_1920x1080_5994_8bit_420.yuv 1920 1080 59.94 130"
+VIDEOS["BoxingPractice_4k"]="/home/or16ixuv/thesis_videos/aom_8bit/a1_4k/BoxingPractice_3840x2160_5994fps_8bit_420.yuv 3840 2160 59.94 130"
+VIDEOS["SnowMountain_360p"]="/home/or16ixuv/thesis_videos/aom_8bit/a4_360p/SnowMountain_640x360_2997.yuv 640 360 29.97 130"
+VIDEOS["SparksElevator_270p"]="/home/or16ixuv/thesis_videos/aom_8bit/a5_270p/SparksElevator_480x270p_5994_8bit.yuv 480 270 59.94 130"
 
-OUT_DIR="encoded_outputs"
-PSNR_DIR="psnr_logs"
-ENERGY_DIR="energy_logs"
+mkdir -p encoded_outputs logs
 
-mkdir -p "$OUT_DIR" "$PSNR_DIR" "$ENERGY_DIR"
+# 初始化 CSV 表头
+echo "Video,QP,Preset,Repeat,Energy_Core_J,Energy_Uncore_J,Energy_DRAM_J" > "$OUTPUT_CSV"
 
-# RAPL domains: core (PP0), uncore (pkg), dram
-RAPL_PATH_BASE="/sys/class/powercap/intel-rapl:0"
-RAPL_CORE="$RAPL_PATH_BASE:0/energy_uj"
-RAPL_UNCORE="$RAPL_PATH_BASE:1/energy_uj"
-RAPL_DRAM="$RAPL_PATH_BASE:2/energy_uj"
+# ---------- 主循环 ----------
+for VIDEO_NAME in "${!VIDEOS[@]}"; do
+  IFS=' ' read -r YUV_PATH WIDTH HEIGHT FPS FRAMES <<< "${VIDEOS[$VIDEO_NAME]}"
 
-function read_energy() {
-  cat "$1"
-}
+  for QP in "${QPS[@]}"; do
+    for PRESET in "${PRESETS[@]}"; do
+      for ((i = 1; i <= N_REPEATS; i++)); do
+        echo -e "\n[INFO] $VIDEO_NAME | QP=$QP | Preset=$PRESET | Iteration=$i"
 
-function to_joule() {
-  echo "scale=6; $1 / 1000000.0" | bc
-}
+        # --- RAPL 读取函数 ---
+        read_energy() {
+          local domain=$1
+          cat "/sys/class/powercap/intel-rapl:0:$domain/energy_uj"
+        }
 
-# Output CSV header
-ENERGY_CSV="$ENERGY_DIR/energy_pilot_results.csv"
-echo "Video,QP,Preset,Run,Energy_Core_J,Energy_Uncore_J,Energy_DRAM_J" > "$ENERGY_CSV"
+        E_CORE_BEFORE=$(read_energy 0)
+        E_UNCORE_BEFORE=$(read_energy 1)
+        E_DRAM_BEFORE=$(read_energy 2)
 
-for QP in "${QPS[@]}"; do
-  for PRESET in "${PRESETS[@]}"; do
-    for RUN in $(seq 1 $REPEAT); do
-      OUT_NAME="qp${QP}_${PRESET}_run${RUN}"
-      OUT_BIN="$OUT_DIR/${OUT_NAME}.265"
-      LOG_TXT="$PSNR_DIR/${OUT_NAME}.log"
-      LOG_CSV="$PSNR_DIR/${OUT_NAME}_frame.csv"
+        OUT_BIN="encoded_outputs/${VIDEO_NAME}_qp${QP}_${PRESET}_run${i}.265"
+        LOG_TXT="logs/${VIDEO_NAME}_qp${QP}_${PRESET}_run${i}.log"
 
-      echo -e "\n[INFO] Encoding QP=${QP} Preset=${PRESET} Run=${RUN}"
+        # --- x265 编码 ---
+        x265 \
+          --input "$YUV_PATH" \
+          --input-res ${WIDTH}x${HEIGHT} \
+          --fps $FPS \
+          --frames $FRAMES \
+          --intra --keyint 1 --min-keyint 1 --bframes 0 --scenecut 0 \
+          --qp $QP --no-opt-qp-pps --ipratio 1.0 \
+          --preset $PRESET \
+          --tune psnr \
+          --psnr \
+          --recon /dev/null \
+          -o "$OUT_BIN" 2> "$LOG_TXT"
 
-      # === RAPL start ===
-      ENERGY_CORE_BEFORE=$(read_energy "$RAPL_CORE")
-      ENERGY_UNCORE_BEFORE=$(read_energy "$RAPL_UNCORE")
-      ENERGY_DRAM_BEFORE=$(read_energy "$RAPL_DRAM")
+        # --- RAPL 读取后 ---
+        E_CORE_AFTER=$(read_energy 0)
+        E_UNCORE_AFTER=$(read_energy 1)
+        E_DRAM_AFTER=$(read_energy 2)
 
-      # === Encode ===
-      x265 \
-        --input "$INPUT_YUV" \
-        --input-res ${WIDTH}x${HEIGHT} \
-        --fps ${FPS} \
-        --frames ${FRAMES} \
-        --intra --keyint 1 --min-keyint 1 --bframes 0 --scenecut 0 \
-        --qp ${QP} --aq-mode 0 \
-        --preset ${PRESET} \
-        --tune psnr \
-        --psnr \
-        --recon /dev/null \
-        --csv "$LOG_CSV" --csv-log-level 2 \
-        -o "$OUT_BIN" 2> "$LOG_TXT"
+        # --- 计算能耗 ---
+        CORE_J=$(awk "BEGIN {print ($E_CORE_AFTER - $E_CORE_BEFORE)/1000000}")
+        UNCORE_J=$(awk "BEGIN {print ($E_UNCORE_AFTER - $E_UNCORE_BEFORE)/1000000}")
+        DRAM_J=$(awk "BEGIN {print ($E_DRAM_AFTER - $E_DRAM_BEFORE)/1000000}")
 
-      # === RAPL end ===
-      ENERGY_CORE_AFTER=$(read_energy "$RAPL_CORE")
-      ENERGY_UNCORE_AFTER=$(read_energy "$RAPL_UNCORE")
-      ENERGY_DRAM_AFTER=$(read_energy "$RAPL_DRAM")
-
-      # === Compute delta ===
-      DELTA_CORE=$((ENERGY_CORE_AFTER - ENERGY_CORE_BEFORE))
-      DELTA_UNCORE=$((ENERGY_UNCORE_AFTER - ENERGY_UNCORE_BEFORE))
-      DELTA_DRAM=$((ENERGY_DRAM_AFTER - ENERGY_DRAM_BEFORE))
-
-      # Convert to Joules
-      CORE_J=$(to_joule $DELTA_CORE)
-      UNCORE_J=$(to_joule $DELTA_UNCORE)
-      DRAM_J=$(to_joule $DELTA_DRAM)
-
-      echo "ControlledBurn_720p,${QP},${PRESET},${RUN},${CORE_J},${UNCORE_J},${DRAM_J}" >> "$ENERGY_CSV"
+        # --- 记录结果 ---
+        echo "$VIDEO_NAME,$QP,$PRESET,$i,$CORE_J,$UNCORE_J,$DRAM_J" >> "$OUTPUT_CSV"
+      done
     done
   done
-
 done
-
-# === Summary ===
-echo -e "\n[INFO] Pilot study complete. Energy data saved to: $ENERGY_CSV"
