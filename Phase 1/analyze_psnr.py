@@ -49,46 +49,47 @@ def load_and_process_csv(filepath):
         print(f"Error processing {filepath}: {e}")
         return None
 
-def plot_psnr_vs_qp(data_by_preset, video_sequence_name, output_dir):
+def plot_psnr_vs_qp_merged(all_data_for_plotting, video_sequence_name, output_dir):
     """
-    Plots PSNR (Y, U, V) vs. QP for each preset.
-    data_by_preset: Dictionary where keys are preset names and values are DataFrames
-                    containing 'QP', 'Avg_Y_PSNR', 'Avg_U_PSNR', 'Avg_V_PSNR'.
+    For each channel (Y, U, V), plot PSNR vs. QP, all presets on the same plot.
     """
-    if not data_by_preset:
-        print(f"No data to plot for {video_sequence_name}.")
-        return
-
-    # Create output directory for plots if it doesn't exist
-    plots_output_dir = os.path.join(output_dir, 'psnr_plots')
+    plots_output_dir = os.path.join(output_dir, 'psnr_plots_merged')
     os.makedirs(plots_output_dir, exist_ok=True)
 
-    for preset_name, preset_df in data_by_preset.items():
-        if preset_df.empty:
-            print(f"No data for preset {preset_name} in {video_sequence_name}. Skipping plot.")
-            continue
+    channels = {
+        'Avg_Y_PSNR': 'Y Channel',
+        'Avg_U_PSNR': 'U Channel',
+        'Avg_V_PSNR': 'V Channel'
+    }
 
-        # Sort by QP for correct plotting order
-        preset_df = preset_df.sort_values(by='QP')
-
+    for channel_key, channel_label in channels.items():
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        ax.plot(preset_df['QP'], preset_df['Avg_Y_PSNR'], marker='o', linestyle='--', label='PSNR_Y')
-        ax.plot(preset_df['QP'], preset_df['Avg_U_PSNR'], marker='o', linestyle='--', label='PSNR_U')
-        ax.plot(preset_df['QP'], preset_df['Avg_V_PSNR'], marker='o', linestyle='--', label='PSNR_V')
+        for preset_name, preset_df in all_data_for_plotting.items():
+            if preset_df.empty or channel_key not in preset_df.columns:
+                continue
 
-        ax.set_title(f'Average PSNR vs. QP for {video_sequence_name}\nPreset: {preset_name}')
+            preset_df = preset_df.sort_values(by='QP')
+            ax.plot(
+                preset_df['QP'],
+                preset_df[channel_key],
+                marker='o',
+                linestyle='--',
+                label=preset_name
+            )
+
+        ax.set_title(f'{channel_label} Average PSNR vs. QP\nVideo: {video_sequence_name}')
         ax.set_xlabel('Quantization Parameter (QP)')
         ax.set_ylabel('Average PSNR (dB)')
-        ax.set_xticks(QPS) # Ensure only the specified QPs are shown on the x-axis
+        ax.set_xticks(QPS)
         ax.grid(True, linestyle=':', alpha=0.7)
-        ax.legend()
+        ax.legend(title='Preset', fontsize=8, title_fontsize=9, loc='best')
         plt.tight_layout()
 
-        plot_filename = os.path.join(plots_output_dir, f'{video_sequence_name}_preset_{preset_name}_psnr_vs_qp.png')
-        plt.savefig(plot_filename)
+        save_path = os.path.join(plots_output_dir, f'{video_sequence_name}_{channel_key}_psnr_vs_qp_all_presets.png')
+        plt.savefig(save_path)
         plt.close(fig)
-        print(f"Plot saved: {plot_filename}")
+        print(f"Saved: {save_path}")
 
 # --- Main Processing Loop ---
 
