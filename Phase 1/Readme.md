@@ -52,7 +52,7 @@ To ensure the statistical validity of the energy data, we introduced Confidence 
 
 1. `measure_raw_energy.sh` (Purified Data Collection Script):
 
-   * A streamlined Bash script whose sole purpose is to perform multiple measurements (up to 50) for each encoding configuration in a quiescent system environment.
+   * A streamlined Bash script whose sole purpose is to perform multiple measurements (max= 15) for each encoding configuration in a quiescent system environment.
    * To minimize measurement overhead, the script uses parameters like `--log-level none` and `-o /dev/null` to suppress all logging and file output from x265.
    * It records only the raw Core domain RAPL energy readings (before and after encoding) into `raw_core_energy_measurements.csv`.
 
