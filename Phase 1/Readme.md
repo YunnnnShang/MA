@@ -45,4 +45,47 @@ Python scripts were developed to automate the data processing and visualization,
 1.  **CSV Parsing and Cleaning:** Reading CSV files, stripping whitespace from column headers, and converting relevant columns (e.g., PSNR, Bits, Encode Order) to numeric types. 
 2.  **Visualize PSNR data:**  `plot_psnr_curves.py` script, which displays the PSNR (y,u,v) value of each frame at different QPs of each preset in the form of a visual curve over time, and generates a PSNR curve for each frame
 3.  **Average PSNR Calculation:** `analyze_psnr.py` script,For each QP-Preset combination, the average PSNR for Y, U, and V components across all frames in the video sequence was calculated.
-   
+
+#### 1.3 High-Precision Energy Measurement: Confidence Interval Testing
+
+To ensure the statistical validity of the energy data, we introduced Confidence Interval (CI) testing and separated the energy data collection from any other processing tasks.
+
+1. `measure_raw_energy.sh` (Purified Data Collection Script):
+
+   * A streamlined Bash script whose sole purpose is to perform multiple measurements (up to 50) for each encoding configuration in a quiescent system environment.
+   * To minimize measurement overhead, the script uses parameters like `--log-level none` and `-o /dev/null` to suppress all logging and file output from x265.
+   * It records only the raw Core domain RAPL energy readings (before and after encoding) into `raw_core_energy_measurements.csv`.
+
+2. `process_and_analyze.py`(Post-Processing Script):
+
+   * This Python script reads the raw data file generated above.
+   * It implements the confidence interval test algorithm: for each set of measurements, it iteratively calculates the confidence interval width until it is less than 2% of the mean, or a maximum number of iterations is reached.
+   * The algorithm includes outlier removal logic to further enhance the stability of the results.
+   * It also integrates RAPL counter overflow handling to ensure accurate energy calculation for long-running encoding tasks.
+   * The final output is a clean dataset named `stable_core_energy_measurements_final.csv`, containing a single, statistically validated, stable average energy value for each configuration.
+#### 1.4  BD-Metrics Analysis
+
+1.  `bitrate_psnr_results.csv`
+   * For a standard comparison of encoding efficiency (BD-Metrics analysis), a separate and precise set of Rate-Distortion (R-D) data is required. The `generate_rd_data.py` script was developed for this purpose.
+   * To ensure the QP value is strictly constant (disabling adaptive quantization and other optimizations), the script uses a more rigorous set of parameters when calling `x265`, which is crucial for the accuracy of the subsequent BD-rate calculations:
+   ```
+   x265 ... --qp ${QP} --no-opt-qp-pps --ipratio 1.0 --tune psnr ...
+   ```
+2. `analyze_bdrates.py`
+   * As a final quantitative evaluation of the performance of different x265 presets, a Bjontegaard-Delta (BD) analysis was performed.
+   * The script reads the data from `bitrate_psnr_results.csv`, uses the `medium` preset as a reference, and calculates the BD-rate (%) and BD-PSNR (dB) for the other nine presets.
+   * The analysis results are saved in `bd_metrics_results.csv`, providing highly convincing data for the thesis on the encoding efficiency differences.
+
+Through the entire workflow, we have produced three core, clean datasets for different analysis purposes:
+
+1. `stable_core_energy_measurements_final.csv`:
+   * Content: Stable average energy data, validated with confidence interval tests.
+   * Purpose: Primary input for energy modeling.
+
+2. `bitrate_psnr_results.csv`:
+   * Content: Bitrate and PSNR data collected in a strictly constant-QP mode.
+   * Purpose: Plotting R-D curves and for BD-Metrics analysis.
+
+3. `bd_metrics_results.csv`:
+   * Content: Quantitative comparison results (BD-rate and BD-PSNR) between different x265 presets.
+   * Purpose: To be used directly in the results chapter of the thesis to demonstrate differences in encoding efficiency.
