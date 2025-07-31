@@ -41,29 +41,39 @@ For every encoding run, detailed frame-level statistics were collected using x26
 
 #### 1.2 Data Processing and Analysis
 
-Python scripts were developed to automate the data processing and visualization, including:
-1.  **CSV Parsing and Cleaning:** Reading CSV files, stripping whitespace from column headers, and converting relevant columns (e.g., PSNR, Bits, Encode Order) to numeric types. 
-2.  **Visualize PSNR data:**  `plot_psnr_curves.py` script, which displays the PSNR (y,u,v) value of each frame at different QPs of each preset in the form of a visual curve over time, and generates a PSNR curve for each frame
-3.  **Average PSNR Calculation:** `analyze_psnr.py` script,For each QP-Preset combination, the average PSNR for Y, U, and V components across all frames in the video sequence was calculated.
+A series of Python scripts were developed to automate the data collection and analysis process, ensuring consistency and repeatability across all 48 video sequences. The workflow was designed to first gather the fundamental rate-distortion data and then perform a quantitative efficiency comparison.
 
-#### 1.3 High-Precision Energy Measurement: Confidence Interval Testing
 
-To ensure the statistical validity of the energy data, we introduced Confidence Interval (CI) testing and separated the energy data collection from any other processing tasks.
+##### 1.2.1 Rate-Distortion and Performance Data Collection
 
-1. `measure_raw_energy.sh` (Purified Data Collection Script):
+The primary data on video quality and encoding performance was collected using a dedicated Python script, designed for robust and comprehensive metric extraction.
 
-   * A streamlined Bash script whose sole purpose is to perform multiple measurements (max= 15) for each encoding configuration in a quiescent system environment.
-   * To minimize measurement overhead, the script uses parameters like `--log-level none` and `-o /dev/null` to suppress all logging and file output from x265.
-   * It records only the raw Core domain RAPL energy readings (before and after encoding) into `raw_core_energy_measurements.csv`.
+1. `generate_rd_data.py` (Comprehensive R-D Data Collection Script):This script automates the process of encoding each of the 48 video sequences across all 10 presets and 4 QP values.
+   *  **Strict R-D Conditions:** To ensure accurate and comparable results for the subsequent BD-Metrics analysis, a rigorous set of x265 parameters was used to maintain a constant QP and disable adaptive optimizations that could influence the rate-distortion characteristics. The core command structure is as follows:
+      ```sh
+      x265 ... --preset [preset] --qp [QP] --tune psnr --psnr --csv [log_file.csv] --csv-log-level 2 --no-opt-qp-pps --ipratio 1.0
+      ```
+   
+   *  **Integrated Multi-Metric Collection:** For each encoding configuration, the script systematically and efficiently gathers a comprehensive set of metrics:
+        1. **PSNR (Y, U, V):** The script calls the `x265` executable with the `--psnr` and `--csv` flags enabled. This allows the encoder to calculate the PSNR for all three color components (Y, U, and V) internally during the encoding process. The detailed frame-by-frame results are saved to a temporary CSV file. The script then reads this file and computes the average PSNR for each component, providing a reliable source for the complete objective quality score.
+        2. **Bitrate:** The final `bitrate_kbps` is parsed directly from the summary output of the x265 process.
 
-2. `process_and_analyze.py`(Post-Processing Script):
+*  **Generated Dataset:** `bitrate_psnr_results.csv`
+     This file contains the foundational rate-distortion data for all sequences. As shown in the provided screenshot, each row represents a unique encoding run and includes the `video_name`, `qp`, `preset`, `bitrate_kbps`, and the corresponding PSNR values for all three components: `psnr_y, psnr_u, and psnr_v`.
 
-   * This Python script reads the raw data file generated above.
-   * It implements the confidence interval test algorithm: for each set of measurements, it iteratively calculates the confidence interval width until it is less than 2% of the mean, or a maximum number of iterations is reached.
-   * The algorithm includes outlier removal logic to further enhance the stability of the results.
-   * It also integrates RAPL counter overflow handling to ensure accurate energy calculation for long-running encoding tasks.
-   * The final output is a clean dataset named `stable_core_energy_measurements_final.csv`, containing a single, statistically validated, stable average energy value for each configuration.
-#### 1.4  BD-Metrics Analysis
+      This dataset is the primary source for plotting complete Rate-Distortion (R-D) curves and serves as the direct input for the subsequent BD-Metrics analysis across all color channels.
+   
+##### 1.2.2 High-Precision Energy Measurement: Confidence Interval Testing
+
+To ensure the statistical validity of the energy data, a separate and purified measurement process was implemented.
+
+1. `measure_raw_energy.sh` (Purified Data Collection Script): A streamlined Bash script whose sole purpose is to perform multiple measurements (15 repetitions) for each encoding configuration in a quiescent system environment. To minimize measurement overhead and isolate the encoding task, all logging and file output from x265 are suppressed（`--log-level none` and `-o /dev/null` ).It records only the raw Intel RAPL energy counter values before and after each encode into `raw_core_energy_measurements.csv`.
+
+2. `process_and_analyze.py`(Post-Processing Script): This Python script processes the raw energy data by implementing a confidence interval (CI) test algorithm. For each set of 15 measurements, it iteratively calculates the mean and confidence interval, removing outliers until the interval width is less than 2% of the mean. This process yields a single, statistically stable average energy value for each configuration. The script also handles potential RAPL counter overflow to ensure accuracy.
+
+##### 1.2.3 BD-Metrics Analysis for Efficiency Comparison
+
+To perform a quantitative evaluation of the compression efficiency of the different x265 presets, a Bjontegaard-Delta (BD) analysis was conducted.
 
 1.  `bitrate_psnr_results.csv`
    * For a standard comparison of encoding efficiency (BD-Metrics analysis), a separate and precise set of Rate-Distortion (R-D) data is required. The `generate_rd_data.py` script was developed for this purpose.
