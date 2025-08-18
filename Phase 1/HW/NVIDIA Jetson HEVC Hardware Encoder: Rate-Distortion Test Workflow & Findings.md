@@ -10,19 +10,53 @@ This test successfully generated a comprehensive dataset of bitrate and PSNR val
 
 ## 1\. Experimental Setup and Remote Access
 
-To ensure consistency and repeatability, all experiments were conducted remotely via a stable network connection to the Jetson device.
+To ensure consistency and repeatability, all experiments were conducted remotely. This document outlines the setup for establishing a stable, direct network connection to the Jetson device from either a Linux or Windows host PC.
 
-  * **Hardware Platform**: NVIDIA Jetson Orin NX 8GB module seated on a reComputer J401 carrier board.
+  * **Hardware Platform**:
+    
+    Target Device: NVIDIA Jetson Orin NX 8GB module seated on a reComputer J401 carrier board.
+    
+    Host PC: A personal computer running either a Linux distribution (e.g., Ubuntu) or Windows 10/11.
   * **Physical Connections**:
     1.  **Network**: The device was connected to the local area network via its **Gigabit Ethernet port (RJ-45)**.
     2.  **Power**: The device was powered using its standard DC power adapter.
-  * **Remote Access**:
-      * A Secure Shell (SSH) connection was established from a host PC to the Jetson device to gain command-line access.
-      * **Command**:
-        ```bash
-        ssh or16ixuv@192.168.178.1
-        ```
-      * This setup provided a stable and reliable interface for script execution and file management throughout the experiment.
+
+  * **Network Configuration**： A direct, static IP-based network was configured to ensure a persistent and predictable connection between the host and the Jetson.
+
+    The Jetson device was pre-configured with the following static network settings:
+    ```sh
+    IP Address: 192.168.178.1
+    Subnet Mask: 255.255.255.0
+    ```
+    Host PC Configuration: The host PC's Ethernet adapter was configured manually to reside on the same subnet as the Jetson.
+    
+    For a **Linux Host**:
+    
+    The network interface connected to the Jetson was configured via the system's network manager to use an IP address within the `192.168.178.0/24` subnet (e.g., `192.168.178.10`).
+    
+    For a **Windows Host**:
+    A static IP address was assigned to the Ethernet adapter by following these steps:
+    
+    Open the "Network Connections" panel by pressing Win + R, typing ncpa.cpl, and pressing Enter.
+    
+    Right-click the relevant Ethernet adapter and select "Properties".
+    
+    Double-click "Internet Protocol Version 4 (TCP/IPv4)".
+    
+    Select the option "Use the following IP address" and fill in the details:
+    
+    IP address: 192.168.178.10
+    
+    Subnet mask: 255.255.255.0
+    
+    Default gateway: (Leave blank)
+      * **Remote Access**:
+          * A Secure Shell (SSH) connection was established from a host PC to the Jetson device to gain command-line access.
+          * **Command**:
+            ```bash
+            ssh or16ixuv@192.168.178.1
+            ```
+          * This setup provided a stable and reliable interface for script execution and file management throughout the experiment.
 
 ## 2\. Automated Rate-Distortion (RD) Data Collection
 
