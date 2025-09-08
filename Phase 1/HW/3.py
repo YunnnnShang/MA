@@ -21,7 +21,7 @@ except ImportError:
 # For the full run, expand the VIDEOS, QPS, and PRESETS lists.
 CLIENT = "or16ixuv@192.168.178.1"
 SSH_BATCH_MODE = True
-SERIAL_PORT = "COM3"
+SERIAL_PORT = "/dev/ttyUSB0"
 BAUD = 115200
 
 # --- VIDEO DATASET ---
@@ -180,47 +180,47 @@ VIDEOS = [
     #     "w": 1920, "h": 1080, "fps": "30"
     # },
 
-    # # --- 720p Sequences (a3_720p) ---
-    # {
-    #     "name": "ControlledBurn_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv",
-    #     "w": 1280, "h": 720, "fps": "30"
-    # },
-    # {
-    #     "name": "DrivingPOV_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/DrivingPOV_1280x720p_5994_8bit_420.yuv",
-    #     "w": 1280, "h": 720, "fps": "60000/1001"
-    # },
-    # {
-    #     "name": "Johnny_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/Johnny_1280x720_60.yuv",
-    #     "w": 1280, "h": 720, "fps": "60"
-    # },
-    # {
-    #     "name": "KristenAndSara_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/KristenAndSara_1280x720_60.yuv",
-    #     "w": 1280, "h": 720, "fps": "60"
-    # },
-    # {
-    #     "name": "RollerCoaster_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/RollerCoaster_1280x720p_5994_8bit_420.yuv",
-    #     "w": 1280, "h": 720, "fps": "60000/1001"
-    # },
-    # {
-    #     "name": "Vidyo3_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/Vidyo3_1280x720p_60fps.yuv",
-    #     "w": 1280, "h": 720, "fps": "60"
-    # },
-    # {
-    #     "name": "Vidyo4_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/Vidyo4_1280x720p_60fps.yuv",
-    #     "w": 1280, "h": 720, "fps": "60"
-    # },
-    # {
-    #     "name": "WestWindEasy_720p",
-    #     "path": "/OriginalVideos/aom_8bit/a3_720p/WestWindEasy_1280x720p30_420.yuv",
-    #     "w": 1280, "h": 720, "fps": "30"
-    # },
+    # --- 720p Sequences (a3_720p) ---
+    {
+        "name": "ControlledBurn_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/ControlledBurn_1280x720p30_420.yuv",
+        "w": 1280, "h": 720, "fps": "30"
+    },
+    {
+        "name": "DrivingPOV_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/DrivingPOV_1280x720p_5994_8bit_420.yuv",
+        "w": 1280, "h": 720, "fps": "60000/1001"
+    },
+    {
+        "name": "Johnny_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/Johnny_1280x720_60.yuv",
+        "w": 1280, "h": 720, "fps": "60"
+    },
+    {
+        "name": "KristenAndSara_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/KristenAndSara_1280x720_60.yuv",
+        "w": 1280, "h": 720, "fps": "60"
+    },
+    {
+        "name": "RollerCoaster_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/RollerCoaster_1280x720p_5994_8bit_420.yuv",
+        "w": 1280, "h": 720, "fps": "60000/1001"
+    },
+    {
+        "name": "Vidyo3_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/Vidyo3_1280x720p_60fps.yuv",
+        "w": 1280, "h": 720, "fps": "60"
+    },
+    {
+        "name": "Vidyo4_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/Vidyo4_1280x720p_60fps.yuv",
+        "w": 1280, "h": 720, "fps": "60"
+    },
+    {
+        "name": "WestWindEasy_720p",
+        "path": "/OriginalVideos/aom_8bit/a3_720p/WestWindEasy_1280x720p30_420.yuv",
+        "w": 1280, "h": 720, "fps": "30"
+    },
 
     # # --- 360p Sequences (a4_360p) ---
     # {
@@ -254,27 +254,27 @@ VIDEOS = [
     #     "w": 640, "h": 360, "fps": "29.97"
     # },
 
-    # --- 270p Sequences (a5_270p) ---
-    {
-        "name": "FourPeople_270p",
-        "path": "/OriginalVideos/aom_8bit/a5_270p/FourPeople_480x270_60.yuv",
-        "w": 480, "h": 270, "fps": "60"
-    },
-    {
-        "name": "ParkJoy_270p",
-        "path": "/OriginalVideos/aom_8bit/a5_270p/ParkJoy_480x270_50.yuv",
-        "w": 480, "h": 270, "fps": "50"
-    },
-    {
-        "name": "SparksElevator_270p",
-        "path": "/OriginalVideos/aom_8bit/a5_270p/SparksElevator_480x270p_5994_8bit.yuv",
-        "w": 480, "h": 270, "fps": "60000/1001"
-    },
-    {
-        "name": "Vertical_Bayshore_270p",
-        "path": "/OriginalVideos/aom_8bit/a5_270p/Vertical_Bayshore_270x480_2997.yuv",
-        "w": 270, "h": 480, "fps": "29.97"
-    }
+    # # --- 270p Sequences (a5_270p) ---
+    # {
+    #     "name": "FourPeople_270p",
+    #     "path": "/OriginalVideos/aom_8bit/a5_270p/FourPeople_480x270_60.yuv",
+    #     "w": 480, "h": 270, "fps": "60"
+    # },
+    # {
+    #     "name": "ParkJoy_270p",
+    #     "path": "/OriginalVideos/aom_8bit/a5_270p/ParkJoy_480x270_50.yuv",
+    #     "w": 480, "h": 270, "fps": "50"
+    # },
+    # {
+    #     "name": "SparksElevator_270p",
+    #     "path": "/OriginalVideos/aom_8bit/a5_270p/SparksElevator_480x270p_5994_8bit.yuv",
+    #     "w": 480, "h": 270, "fps": "60000/1001"
+    # },
+    # {
+    #     "name": "Vertical_Bayshore_270p",
+    #     "path": "/OriginalVideos/aom_8bit/a5_270p/Vertical_Bayshore_270x480_2997.yuv",
+    #     "w": 270, "h": 480, "fps": "29.97"
+    # }
 ]
 
 QPS = [22, 27, 32, 37]
@@ -290,7 +290,7 @@ INTERVAL_PART = 0.02
 MIN_MEASUREMENTS = 5
 MAX_MEASUREMENTS = 15
 STABILIZATION_SEC = 30.0
-MIN_ENCODE_DURATION_SEC = 3.0
+MIN_ENCODE_DURATION_SEC = 2.0
 IDLE_GAP_SEC = 2.0
 #COOLDOWN_SEC = 0.0
 
@@ -340,30 +340,59 @@ def ssh_command(client: str, remote_cmd: str):
             f"STDERR:\n{res.stderr}"
         )
 
-def timed_remote_encode(client: str, video_info: dict, qp: int, preset_id: int, frames: int, out_path: str) -> float:
-    """Runs the encoding command, looping if necessary. Returns total wall-clock time."""
+def determine_loop_count(client: str, video_info: dict, qp: int, preset_id: int, frames: int, out_path: str) -> int:
+    """
+    Performs a two-probe measurement to accurately determine the required loop count
+    to meet MIN_ENCODE_DURATION_SEC, separating SSH overhead from payload.
+    This function does NOT perform the final measurement.
+    """
     one_cmd = (
         f"{VIDEO_ENCODE_EXEC} {video_info['path']} {video_info['w']} {video_info['h']} H265 {out_path} "
         f"-hpt {preset_id} -sf 0 -ef {frames-1} -ifi 1 --econstqp -qpi {qp} {qp} {qp}"
     )
-    
-    # Time a single execution to determine loop count
-    t0 = time.time()
-    ssh_command(client, one_cmd)
-    t1 = time.time()
-    single_duration = t1 - t0
 
-    loops = int(np.ceil(MIN_ENCODE_DURATION_SEC / max(single_duration, 1e-6)))
+    # Probe 1: Time a single execution
+    t_start_1 = time.time()
+    ssh_command(client, one_cmd)
+    t_end_1 = time.time()
+    duration_1 = t_end_1 - t_start_1
+
+    if duration_1 >= MIN_ENCODE_DURATION_SEC:
+        return 1
+
+    # Probe 2: Time a double execution
+    two_cmd = f"for i in {{1..2}}; do {one_cmd}; done"
+    t_start_2 = time.time()
+    ssh_command(client, two_cmd)
+    t_end_2 = time.time()
+    duration_2 = t_end_2 - t_start_2
+
+    t_payload = max(0.001, duration_2 - duration_1)
+    t_overhead = max(0.001, duration_1 - t_payload)
+
+    loops = int(np.ceil((MIN_ENCODE_DURATION_SEC - t_overhead) / t_payload))
     
-    # The total time is measured for the entire looped command for higher precision
-    if loops > 1:
-        looped_cmd = f"for i in {{1..{loops}}}; do {one_cmd}; done"
-        t_start_loop = time.time()
-        ssh_command(client, looped_cmd)
-        t_end_loop = time.time()
-        return t_end_loop - t_start_loop
-        
-    return single_duration
+    return loops if loops > 0 else 1
+def run_final_encode(client: str, video_info: dict, qp: int, preset_id: int, frames: int, out_path: str, loops: int) -> float:
+    """
+    Runs the final, looped encoding command for a specific number of loops.
+    This is the function that will be timed and measured by the power meter.
+    """
+    one_cmd = (
+        f"{VIDEO_ENCODE_EXEC} {video_info['path']} {video_info['w']} {video_info['h']} H265 {out_path} "
+        f"-hpt {preset_id} -sf 0 -ef {frames-1} -ifi 1 --econstqp -qpi {qp} {qp} {qp}"
+    )
+
+    if loops <= 1:
+        final_cmd = one_cmd
+    else:
+        final_cmd = f"for i in {{1..{loops}}}; do {one_cmd}; done"
+
+    t_start = time.time()
+    ssh_command(client, final_cmd)
+    t_end = time.time()
+
+    return t_end - t_start
 
 def measure_once_paired(lmg: serial.Serial, run_fn):
     """Performs one paired load/idle measurement cycle."""
@@ -442,13 +471,14 @@ def main():
     print(f"\n--- System Stabilization ({STABILIZATION_SEC}s) ---")
     time.sleep(STABILIZATION_SEC)
 
-    output_csv = 'energy_results_hardware_batch.csv'
+    output_csv = 'energy_results_hardware_batch_normalized.csv' # 建议使用新文件名
     with open(output_csv, 'w', newline='') as f:
         writer = csv.writer(f)
+        # 更新CSV表头以反映归一化后的数据
         writer.writerow(['video_name', 'qp', 'preset', 
-                         'E_process_J', 'P_process_W', 't_process_s',
-                         'E_load_J', 't_load_s', 'P_load_W',
-                         'E_idle_J', 't_idle_s', 'P_idle_W'])
+                         'E_process_single_J', 'P_process_W', 't_process_single_s',
+                         'E_load_total_J', 't_load_total_s', 'P_load_W',
+                         'E_idle_total_J', 't_idle_total_s', 'P_idle_W'])
 
         # *** BATCH PROCESSING LOOPS ***
         for video in VIDEOS:
@@ -457,25 +487,55 @@ def main():
                     remote_out_path = f"/tmp/{video['name']}_qp{qp}_p{preset}.h265"
                     print(f"\n--- Processing: {video['name']} | QP={qp} | Preset={preset} ---")
                     
+                    # --- 1. PROBE PHASE (No power measurement) ---
+                    # 先执行探测，确定本次测试点需要的循环次数
+                    try:
+                        print(" -> Probing for optimal loop count...")
+                        _loops = determine_loop_count(CLIENT, video, qp, preset, FRAMES_TO_ENCODE, remote_out_path)
+                        print(f" -> Probe complete. Using {_loops} loops for this test point.")
+                    except RuntimeError as e:
+                        print(f"  [FATAL_PROBE] Probe failed for this test point. Aborting.")
+                        print(e)
+                        # 清理可能的残留文件并跳到下一个测试点
+                        try: ssh_command(CLIENT, f"rm -f {remote_out_path}")
+                        except RuntimeError: pass
+                        continue # Skip to the next test point in the preset loop
+        
                     all_results = []
                     
+                    # --- 2. MEASUREMENT PHASE ---
                     for rep in range(1, MAX_MEASUREMENTS + 1):
                         print(f"\n--- Repetition {rep}/{MAX_MEASUREMENTS} ---")
                         try:
-                            run_fn = lambda: timed_remote_encode(CLIENT, video, qp, preset, FRAMES_TO_ENCODE, remote_out_path)
-                            result = measure_once_paired(lmg, run_fn)
+                            # 定义一个简单的lambda函数，它只调用最终的执行函数
+                            # 这个函数将被 measure_once_paired 精确地计时和积分
+                            final_run_fn = lambda: run_final_encode(CLIENT, video, qp, preset, FRAMES_TO_ENCODE, remote_out_path, _loops)
+                            
+                            # measure_once_paired 现在测量的就是纯粹的、最终的N次循环
+                            result = measure_once_paired(lmg, final_run_fn)
                             
                             if result and result["E_process"] > 0:
+                                # --- 3. NORMALIZATION ---
+                                original_total_energy = result['E_process']
+                                result['E_process'] /= _loops
+                                result['t_process'] /= _loops
+                                if result['t_process'] > 0:
+                                    result['P_process'] = result['E_process'] / result['t_process']
+                                else:
+                                    result['P_process'] = 0
+                                
                                 all_results.append(result)
-                                print(f"  [ok] E_process={result['E_process']:.3f} J, P_process={result['P_process']:.2f} W")
+                                print(f"  [info] Loops={_loops}, E_total={original_total_energy:.3f} J -> E_single={result['E_process']:.3f} J, t_single={result['t_process']:.3f} s")
                             else:
                                 print("  [skip] Invalid sample.")
+        
                         except RuntimeError as e:
                             print(f"  [ERROR] A command failed during repetition {rep}. Aborting this test point.")
                             print(e)
                             all_results = []
                             break
 
+                         # --- 后续的统计分析将自动使用归一化后的 'E_process' 值 ---
                         current_energies = [r['E_process'] for r in all_results]
                         if len(current_energies) >= MIN_MEASUREMENTS:
                             energies_filtered = iqr_filter(current_energies)
@@ -486,10 +546,11 @@ def main():
                                 threshold = INTERVAL_PART * mean_e
 
                                 print(f"-> Stats (n={len(energies_filtered)}): "
-                                    f"Mean={mean_e:.3f} J, CI half-width={ci_half_width:.3f} J, Threshold={threshold:.3f} J")
+                                      f"Mean_single={mean_e:.3f} J, CI half-width={ci_half_width:.3f} J, Threshold={threshold:.3f} J")
 
                                 if ci_half_width < threshold:
                                     print("-> Confidence Interval target met. Stopping early.")
+                                    # 过滤掉不在最终统计范围内的结果
                                     all_results = [r for r in all_results if r['E_process'] in energies_filtered]
                                     break
                                 else:
@@ -499,14 +560,14 @@ def main():
                                         after = len(energies_filtered)
                                         if after != before:
                                             print(f"-> median±25% filtered: {before} -> {after} samples")
-
-                        #time.sleep(COOLDOWN_SEC)
-
+                    
                     if all_results:
-                        # Final result calculation for this test point
+                        # --- 最终结果现在是基于“单次编码平均值”计算的 ---
                         final_energy_mean = np.mean([r['E_process'] for r in all_results])
                         final_power_mean = np.mean([r['P_process'] for r in all_results])
                         final_duration_mean = np.mean([r['t_process'] for r in all_results])
+                        
+                        # 注意: 原始的load/idle值仍然是循环的总值，这里我们主要关心归一化后的净值
                         final_load_energy = np.mean([r['E_load'] for r in all_results])
                         final_load_time = np.mean([r['t_load'] for r in all_results])
                         final_load_power = np.mean([r['P_load'] for r in all_results])
@@ -532,3 +593,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
