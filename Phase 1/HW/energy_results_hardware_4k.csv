@@ -1,0 +1,5 @@
+video_name,qp,preset,E_process_single_J,P_process_W,t_process_single_s,E_load_total_J,t_load_total_s,P_load_W,E_idle_total_J,t_idle_total_s,P_idle_W
+TimeLapse_4k,37,1,8.9715,4.49,2.000,21.8800,2.000,10.94,12.9085,2.000,6.45
+TimeLapse_4k,37,2,8.4907,5.66,1.501,17.1084,1.501,11.40,8.6177,1.501,5.74
+TimeLapse_4k,37,3,13.0925,2.01,6.499,64.7424,6.499,9.96,51.6499,6.499,7.95
+TimeLapse_4k,37,4,13.1057,2.02,6.501,64.7752,6.501,9.96,51.6695,6.501,7.95
