@@ -1,3 +1,56 @@
+### Transform Usage Statistics of HEVC Intra Coding
+
+Table X reports the transform usage statistics derived from the VQ Analyzer exports for the software encoder (x265) and the NVIDIA hardware encoder (NVENC). The rows correspond to transform tools, and the columns correspond to different presets. For each configuration, the total number of Transform Units (TUs) utilizing a given tool is aggregated over all test sequences.
+
+**Table X.** Transform usage by preset (x265 vs. NVENC, intra coding, 30-frame segments).
+(a) x265 software encoder
+
+| Transform / Preset | fast       | faster     | medium     | superfast  | ultrafast  | veryfast   |
+| ------------------ | ---------- | ---------- | ---------- | ---------- | ---------- | ---------- |
+| **DCT**            | 42,905,036 | 42,904,964 | 43,069,219 | 42,596,926 | 27,389,148 | 42,905,019 |
+| **DST (Y4×4)**     | 53,412,363 | 53,412,345 | 54,897,222 | 50,695,758 | 0          | 53,412,418 |
+| **PCM**            | 0          | 0          | 0          | 0          | 0          | 0          |
+| **Transform Skip** | 0          | 0          | 0          | 0          | 0          | 0          |
+
+(b) NVIDIA hardware encoder
+
+| Transform / Preset | fast       | medium     | slow       | ultrafast  |
+| ------------------ | ---------- | ---------- | ---------- | ---------- |
+| **DCT**            | 48,274,920 | 33,392,742 | 33,392,747 | 54,260,693 |
+| **DST (Y4×4)**     | 0          | 57,132,988 | 57,132,966 | 0          |
+| **PCM**            | 0          | 0          | 0          | 0          |
+| **Transform Skip** | 0          | 7,358,927  | 7,358,921  | 0          |
+
+---
+
+### Result Analysis
+
+Several clear patterns emerge from these statistics:
+
+1. **x265 Software Encoder.**
+   Across all presets except *ultrafast*, a very large number of intra luma 4×4 TUs are processed using the DST-VII transform, in line with the HEVC standard restriction that DST applies exclusively to 4×4 intra luma TUs. The *ultrafast* preset shows **no usage of 4×4 luma TUs** (and hence no DST), reflecting its configuration choice to disable small TUs for maximum speed. Transform Skip is absent across all presets, consistent with x265’s default behavior where `--tskip` is disabled for lossy coding.
+
+2. **NVENC Hardware Encoder.**
+   For *fast* and *ultrafast* presets, no luma 4×4 TUs are observed, thus DST is not applied. In contrast, *medium* and *slow* presets exhibit very frequent usage of 4×4 luma TUs, with **DST counts around 57 million** and additional **transform skip flags (≈7.36 million)**. This shows that NVENC, when operated in slower presets, allocates significant resources to finer partitioning and to selectively bypassing transforms, potentially to preserve sharp edges and textural details.
+
+3. **Consistency Checks.**
+   The aggregate luma TU counts are on the order of 10^7–10^8, which is consistent with expectations. A discrepancy of approximately 1.5 million was observed in NVENC medium/slow configurations when comparing *LumaTU_total* with the sum of DCT+DST+TS+PCM. This difference corresponds closely to the transform skip counts in the chroma channels (Cb/Cr), which were not included in the luma budget. Thus, the statistics are internally consistent and the discrepancy is attributable to chroma-side skips rather than measurement error.
+
+---
+
+### Research Implications
+
+These results highlight **systematic differences** between the software and hardware encoder implementations:
+
+* **TU and transform selection policy.**
+  Both encoders aggressively exploit DST for intra 4×4 luma blocks in non-ultrafast presets, but x265 consistently uses it whenever small TUs are enabled, while NVENC selectively disables 4×4/DST in faster presets.
+
+* **Speed–quality trade-offs.**
+  The absence of DST and transform skip in ultrafast/fast modes of both encoders indicates a deliberate design to minimize computational complexity at the expense of coding efficiency. Conversely, slower modes re-enable these tools, suggesting a configurable balance between throughput and efficiency.
+
+* **Energy modeling relevance.**
+  Since DST and Transform Skip affect not only compression efficiency but also hardware datapath utilization (e.g., bypassing transform blocks or invoking specialized DST logic), their usage frequencies provide a direct explanation for some of the observed **energy consumption differences** between x265 and NVENC across presets. Specifically, NVENC’s reliance on transform skip in medium/slow modes could partially explain its distinct power–quality trade-off profile.
+
 
 ### Transform Skip 在 HEVC 里到底是什么？
 
