@@ -51,7 +51,37 @@ These results highlight **systematic differences** between the software and hard
 * **Energy modeling relevance.**
   Since DST and Transform Skip affect not only compression efficiency but also hardware datapath utilization (e.g., bypassing transform blocks or invoking specialized DST logic), their usage frequencies provide a direct explanation for some of the observed **energy consumption differences** between x265 and NVENC across presets. Specifically, NVENC’s reliance on transform skip in medium/slow modes could partially explain its distinct power–quality trade-off profile.
 
+2. x265 编码器行为分析
+[x265 AV1-style table (head)]
 
+核心发现: x265 的预设在变换类型的选择上体现了平滑的、渐进式的复杂度权衡。
+
+关键洞察:
+
+DST 的作用: 从 superfast 到 medium，编码器都大量使用了 DST (DST (Y4x4))，其使用次数甚至超过了 DCT。这表明在这些预设下，x265 的 RDO 引擎认为，花费额外的计算去检查 DST 是否更优是值得的。
+
+ultrafast 的极致简化: ultrafast 预设完全禁用了 DST (DST (Y4x4) 为 0)。这是一个典型的为了追求极致速度而做出的算法牺牲。RDO 过程被大大简化，编码器不再为 4x4 块进行 DCT vs DST 的决策，直接全部使用 DCT。
+
+Transform Skip 的缺失: 在所有预设下，TransformSkip 的使用次数都为 0。这对于你使用的自然视频测试序列是正常的。Transform Skip 主要在屏幕内容或残差极小的区域有优势，在复杂纹理的自然视频中，RDO 计算后通常认为它不是最优选择。
+
+3. NVIDIA 硬件编码器 (NVENC) 行为分析
+[NVIDIA AV1-style table (head)]
+
+核心发现: 与 x265 不同，NVIDIA 硬件编码器的预设在变换工具的选择上呈现出**“开关式”的、非连续的**行为模式。
+
+关键洞察:
+
+预设的“阶梯式”功能开启:
+
+ultrafast 和 fast 预设: 完全不使用 DST 和 Transform Skip。它们的变换模块工作在一个非常基础的“纯 DCT”模式下，这极大地简化了硬件处理流程，从而实现高速编码。
+
+medium 和 slow 预设: 同时开启了 DCT, DST, 和 Transform Skip。这表明从 medium 预设开始，硬件 RDO 引擎进入了一个更复杂的模式，会综合评估这三种变换工具的优劣。
+
+medium vs slow 的相似性: 在变换类型的选择上，medium 和 slow 预设的统计数据几乎完全相同。这强烈暗示，这两个预设之间的性能和能耗差异并非源于变换阶段，而是源于其他编码环节，例如：
+
+Intra 预测模式的搜索范围 (slow 可能搜索更多角度模式)。
+
+CU 划分的搜索深度 (slow 可能进行更穷举的 RDO 决策)。
 ### Transform Skip 在 HEVC 里到底是什么？
 
 * 正常情况下，HEVC 的残差会做 **整数 DCT-II**（大多数块尺寸）或 **DST-VII**（仅限 **帧内 luma 的 4×4**）。
