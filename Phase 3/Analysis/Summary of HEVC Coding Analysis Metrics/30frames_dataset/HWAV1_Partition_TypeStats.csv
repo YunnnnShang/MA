@@ -1,0 +1,9 @@
+Partition_Type,slow,medium,fast,ultrafast
+Partition types: 2Nx2N,47510050,47510061,25100419,22953348
+Partition types: 2NxN,0,0,0,0
+Partition types: Nx2N,0,0,0,0
+Partition types: NxN,18612485,18612495,7718453,10732230
+Partition types: 2NxnU,0,0,0,0
+Partition types: 2NxnD,0,0,0,0
+Partition types: nLx2N,0,0,0,0
+Partition types: nRx2N,0,0,0,0

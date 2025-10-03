@@ -1,0 +1,7 @@
+SAO_Type_Luma,fast,faster,medium,superfast,ultrafast,veryfast
+SAO type luma: No Operation,1455729,1455733,1477660,0,0,1455731
+SAO type luma: Band,203289,203290,201792,0,0,203290
+SAO type luma: 0-Degree Edge,569848,569848,563599,0,0,569847
+SAO type luma: 90-Degree Edge,290584,290584,284845,0,0,290585
+SAO type luma: 135-Degree Edge,440533,440532,435847,0,0,440539
+SAO type luma: 45-Degree Edge,637617,637613,633857,0,0,637608

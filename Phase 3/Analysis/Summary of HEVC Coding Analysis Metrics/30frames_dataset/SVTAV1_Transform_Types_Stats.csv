@@ -1,0 +1,3 @@
+Transform_Type,fast,faster,medium,superfast,ultrafast,veryfast
+DCT,1,1,2,0,5760,1
+DST,5759,5759,5758,5760,0,5759
