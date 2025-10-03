@@ -1,0 +1,4 @@
+Deblocking_Luma_V,fast,faster,medium,superfast,ultrafast,veryfast
+Deblocking luma vertical: No deblock,1133279,1133279,1140682,1124332,634200,1133217
+Deblocking luma vertical: Luma strong,1631548,1631548,1637639,1611049,1369642,1631550
+Deblocking luma vertical: Luma weak,3857817,3857817,3862123,3807115,2852910,3857645

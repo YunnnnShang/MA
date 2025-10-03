@@ -1,0 +1,15 @@
+TU_Depth,slow,medium,fast,ultrafast
+TU depth (CU 64): 0,0,0,0,0
+TU depth (CU 64): 1,0,0,0,0
+TU depth (CU 64): 2,0,0,0,0
+TU depth (CU 64): 3,0,0,0,0
+TU depth (CU 64): 4,0,0,0,0
+TU depth (CU 32): 0,186262,186262,209521,200142
+TU depth (CU 32): 1,0,0,0,0
+TU depth (CU 32): 2,0,0,0,0
+TU depth (CU 32): 3,0,0,0,0
+TU depth (CU 16): 0,451140,451136,463284,395167
+TU depth (CU 16): 1,0,0,727705,1015084
+TU depth (CU 16): 2,0,0,0,0
+TU depth (CU 8): 0,544791,544795,0,0
+TU depth (CU 8): 1,1668135,1668157,0,0

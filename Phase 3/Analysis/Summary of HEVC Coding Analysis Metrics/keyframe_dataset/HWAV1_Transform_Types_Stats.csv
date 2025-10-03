@@ -1,0 +1,4 @@
+Transform_Type,slow,medium,fast,ultrafast
+DCT,3,3,5760,5760
+DST,117,117,0,0
+TransformSkip,5640,5640,0,0

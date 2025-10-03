@@ -1,0 +1,4 @@
+SCC_Tool,slow,medium,fast,ultrafast
+Inter PU type: IBC,0,0,0,0
+Pred mode: Palette,0,0,0,0
+Intra PU type: Palette,0,0,0,0

@@ -1,0 +1,8 @@
+Intra_Chroma_Mode,slow,medium,fast,ultrafast
+Intra chroma modes: Diag,41286,41286,22856,26655
+Intra chroma modes: LM,0,0,0,0
+Intra chroma modes: DM,1171526,1171536,530407,550303
+Intra chroma modes: DC,171505,171506,111527,112199
+Intra chroma modes: Planar,218651,218652,117985,116631
+Intra chroma modes: Horiz,193958,193958,107873,111476
+Intra chroma modes: Vert,158141,158141,91273,94126

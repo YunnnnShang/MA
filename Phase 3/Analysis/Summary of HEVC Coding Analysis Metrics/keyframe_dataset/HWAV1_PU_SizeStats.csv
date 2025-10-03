@@ -1,0 +1,26 @@
+PU_Size,slow,medium,fast,ultrafast
+PU sizes: 64x64,0,0,0,0
+PU sizes: 64x48,0,0,0,0
+PU sizes: 64x32,0,0,0,0
+PU sizes: 64x16,0,0,0,0
+PU sizes: 48x64,0,0,0,0
+PU sizes: 32x64,0,0,0,0
+PU sizes: 32x32,237175,237175,260213,250390
+PU sizes: 32x24,0,0,0,0
+PU sizes: 32x16,0,0,0,0
+PU sizes: 32x8,0,0,0,0
+PU sizes: 24x32,0,0,0,0
+PU sizes: 16x64,0,0,0,0
+PU sizes: 16x32,0,0,0,0
+PU sizes: 16x16,512516,512512,513219,449482
+PU sizes: 16x12,0,0,0,0
+PU sizes: 16x8,0,0,0,0
+PU sizes: 16x4,0,0,0,0
+PU sizes: 12x16,0,0,0,0
+PU sizes: 8x32,0,0,0,0
+PU sizes: 8x16,0,0,0,0
+PU sizes: 8x8,668530,668536,833956,1246072
+PU sizes: 8x4,0,0,0,0
+PU sizes: 4x16,0,0,0,0
+PU sizes: 4x8,0,0,0,0
+PU sizes: 4x4,2147384,2147424,0,0
