@@ -56,21 +56,19 @@ multiple x265 presets are offered to match different hardware presets.
 
 #### Observations from the slides
 
-Hardware presets use only 32×32, 16×16, 8×8 and occasionally 4×4 PUs; larger PUs (e.g.,
-64×32, 64×48) are never used. For the slow and medium hardware presets the number of 4×4
-PUs is very high (~2.15 million), while for fast/ultrafast the hardware encoder does not use 4×4
-PUs at all . In contrast, x265’s medium preset also uses many 4×4 PUs, but its superfast and
-ultrafast presets disable them entirely.
-The smallest CU size determines the smallest PU/TU size possible. Because hardware fast/ultrafast
-never go below 8×8, the minimum CU size should be at least 8 for those modes; hardware slow/
-medium make heavy use of 4×4 blocks and therefore require a minimum CU size of 8 or smaller.
+Hardware encoder uses only 32×32, 16×16, and 8×8 PUs across all presets. For **ultrafast and fast hardware presets**, the usage of 4×4 PUs is completely **zero**. In contrast, **medium and slow** hardware presets make heavy use of 4×4 blocks, with counts exceeding 2.1 million.
+
+x265 software presets always allow 4×4 PUs, even in **ultrafast mode**, which differs significantly from NVENC’s restrictive behavior. 
+
+To align with the hardware encoder, presets intended to mimic **fast/ultrafast** modes must explicitly prevent 4×4 PU generation, while **slow/medium** clones should retain them. The smallest allowed **CU size** influences PU usage, and `--min-cu-size` should be adapted accordingly.
+
 
 #### Parameter mapping and recommendations
 
-| Hardware preset | Observed PU/CU usage | Suggested x265 parameters | Rationale |
-|-----------------|----------------------|---------------------------|------------|
-| Slow or medium | Heavy use of 4×4 PUs alongside 8×8–32×32 PUs. | Keep default `--min-cu-size 8` to allow 8×8 CUs and 4×4 PUs, and set `--ctu 32` to limit the maximum CU size to 32×32. Do not disable 4×4 transforms. | The hardware encoder accepts 4×4 PU/TU blocks for slow and medium presets; limiting the maximum CU size to 32 reduces the search space and matches the hardware’s largest PU of 32×32. |
-| Fast or ultrafast | PUs are limited to 8×8–32×32; no 4×4 PUs. | Use `--min-cu-size 8` to prevent 4×4 CUs, combine with `--ctu 32` to match the 32×32 maximum CU, and set `--tu-intra-depth 1` and `--tu-inter-depth 1` so the TU depth never splits into 4×4. | This configuration removes 4×4 CUs/TUs and restricts the maximum CU size to 32, mirroring the hardware fast/ultrafast presets. |
+| Hardware preset | Observed PU usage pattern | Suggested x265 parameters | Rationale |
+|-----------------|---------------------------|---------------------------|-----------|
+| Slow or medium  | Extensive use of 4×4, 8×8, 16×16, and 32×32 PUs. | `--ctu 32` and default `--min-cu-size` (i.e. 8). Allow 4×4 by not restricting TU depth. | Mirrors the NVENC encoder’s rich partitioning behavior at slower presets. `--ctu 32` caps CU size to match 32×32 maximum PU. |
+| Fast or ultrafast | Uses only 8×8, 16×16, 32×32 PUs; **no 4×4 PUs**. | `--min-cu-size 8 --ctu 32 --tu-intra-depth 1 --tu-inter-depth 1` | Prevents creation of 4×4 PUs and TUs. This mimics hardware constraints and simplifies block tree complexity, matching NVENC behavior. |
 
 ---
 
@@ -78,61 +76,70 @@ medium make heavy use of 4×4 blocks and therefore require a minimum CU size of 
 
 #### Observations
 
-The HEVC standard supports 35 luma intra-prediction modes. x265 evaluates all 33 angular modes
-by default (plus planar/DC) unless `--fast-intra` is used.
-The slide shows that the hardware encoder only uses a limited subset of luma modes: the counts
-for many modes are zero across all hardware presets. For example, modes 6, 7 and modes
-above 12 are unused or rarely used; the hardware fast/ultrafast presets concentrate on a small set
-of modes such as DC, planar and a few angular modes.
+- The **hardware encoder (NVENC)** demonstrates a selective use of intra prediction modes depending on the preset:
+  - For `ultrafast`, it avoids **all odd-numbered angular modes** (e.g., modes 3, 5, 7, 9, ..., 33) while still using **even-numbered angular modes** along with **DC (mode 1)** and **Planar (mode 0)**.
+  - For `fast` `medium` `slow` presets, nearly **all angular modes** (both odd and even) are used to varying degrees.
+- This suggests that **ultrafast hardware encoding minimizes directional complexity**, likely for energy or latency efficiency.
+- **x265**, by default, uses all 35 intra luma modes regardless of preset. This results in higher complexity but more accurate predictions. This discrepancy highlights a key simplification in hardware-based intra coding.
+
 
 #### Parameter mapping
 
-| Aspect | Suggested x265 parameters | Explanation |
-|---------|---------------------------|-------------|
-| Limit intra luma modes | Enable `--fast-intra`. This initial scan checks every fifth angular mode and then refines around the best candidate, reducing the number of modes to ~10. | The hardware encoder uses only a handful of intra modes; `--fast-intra` achieves a similar reduction in angular mode search. |
-| Consider disabling rare modes completely | Optionally combine `--fast-intra` with `--no-tskip` to disable transform skip evaluation for 4×4 TUs, which the hardware does not use. | Transform-skip is useful mainly for screen-content coding and is not supported by NVENC; disabling it further aligns x265’s behaviour. |
+| Hardware preset | Observed intra mode usage | Suggested x265 parameters | Rationale |
+|-----------------|---------------------------|---------------------------|-----------|
+| Slow or medium  | Uses most or all 35 intra luma modes. | Default x265 configuration is sufficient. Optionally enable `--tskip` and disable `--fast-intra`. | Software's full-mode search mirrors NVENC slow/medium behavior. |
+| Fast or ultrafast | Uses Planar, DC, and a small number of angular modes (e.g., 8, 10, 26); many modes unused. | Enable `--fast-intra` to reduce angular mode search to ~10. Optionally disable `--tskip` to match hardware constraints. | `--fast-intra` performs a sparse search (every 5th angular mode + local refinement), closely aligning with NVENC fast presets. Disabling transform skip also matches hardware limitations. |
 
 ---
 
 ### 4 Intra chroma modes
 
-#### Observations
+#### Observations 
 
-HEVC chroma prediction offers six modes: DC, planar, horizontal, vertical, diagonal and LM (Linear
-Model). The slide shows that NVENC uses mostly DM (derived mode) and planar/horizontal/
-vertical modes; LM is never used and diagonal modes are rarely chosen.
+The NVENC hardware encoder exhibits a strong preference for **chroma mode simplification**. In all presets, **Derived Mode (DM)** dominates chroma prediction, followed by moderate usage of DC and Planar modes. Directional modes like Horizontal, Vertical, and Diagonal are sparsely used, and **Linear Model (LM)** mode is completely unused in both software and hardware encoders.
+
+The usage patterns remain fairly stable across slow and medium presets. However, in fast and ultrafast presets, overall chroma mode diversity decreases: DM and Planar dominate, while directionals and DC drop in frequency. This suggests that hardware encoders aggressively prune chroma prediction modes at higher speed presets to reduce complexity.
+
+In contrast, the x265 software encoder uses nearly all chroma modes across all presets—including Diagonal, Horizontal, Vertical, and Planar—even in ultrafast mode. LM is disabled across all presets, indicating that both encoders avoid this mode due to its complexity or unsuitability for natural content.
+
 
 #### Parameter suggestions
 
-x265 does not expose direct switches for individual chroma modes. However, restricting chroma mode
-search implicitly follows from limiting the luma modes and CU sizes. Using `--fast-intra` (Section 3)
-reduces the number of angular luma candidates and therefore the number of chroma mode evaluations.
-Disabling 4×4 CUs also removes LM (which is only available on 4×4 blocks). Therefore, the CU-size
-restrictions recommended earlier already steer x265 towards the hardware’s chroma-mode usage.
+| Hardware preset   | Observed chroma mode usage                        | Suggested x265 parameters                                                                 | Rationale                                                                 |
+|-------------------|---------------------------------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| Slow or medium    | DM dominant; Planar > DC > Directionals; no LM   | Use default settings; optionally set `--no-intra-refresh`, and avoid LM tools.              | x265 defaults already match this mode diversity well; no tuning needed.   |
+| Fast or ultrafast | Mostly DM and Planar; lower DC/directionals      | Reduce TU depth via `--tu-intra-depth 1`, keep Planar and DM; optionally disable Diagonals and `--no-rect` and `--no-strong-intra-smoothing` to simplify chroma intra behavior. | Simplifies chroma prediction while retaining essential high-use modes.    |
 
 ---
 
 ### 5 Transform-unit sizes and transform types
 
-#### Observations
+#### Observations (Corrected and Augmented)
 
-The hardware slow and medium presets use 4×4, 8×8, 16×16 and 32×32 TUs, with ~2.48 million
-4×4 TUs. The fast and ultrafast presets, however, show a substantial reduction in 4×4 TUs
-(567k and 741k, respectively) and increased use of 8×8 and 16×16 TUs.
-The transform-type slide shows that NVENC uses DCT exclusively for fast/ultrafast presets (DST
-counts are zero) and only a few DST transforms for slow/medium presets. HEVC uses DST only
-for 4×4 luma TUs.
+The **hardware slow and medium presets** utilize the full range of transform unit (TU) sizes—4×4, 8×8, 16×16, and 32×32—with approximately **2.48 million 4×4 TUs** each. These small TUs are primarily derived from **CU=8 blocks split at TU depth=1**, as seen from the **TU depth stats** (`CU8:1 ≈ 1.67M`) and `CU8:0 ≈ 545k` indicating 8×8 TUs. This TU structure allows **fine-grained residual coding**, supporting **high coding efficiency** especially for detailed textures.
 
-#### Parameter mapping
+In contrast, **fast and ultrafast hardware presets** show a **drastic reduction** in 4×4 TU usage (**567k and 741k**, respectively), and a corresponding **rise in 8×8 and 16×16 TUs**, consistent with the increase in `TU depth(CU 16)=1` (**727k for fast**, **1M+ for ultrafast**), which produces 8×8 TUs from CU=16 blocks. Notably, **CU=8 is unused** in fast/ultrafast (`CU 8:0/1 = 0`), which confirms the near-elimination of 4×4 TU generation. The continued presence of **~200k 32×32 TUs** across all presets suggests that **32×32 is not disabled**, but used selectively.
 
-| Hardware preset | TU usage & transform type | Suggested x265 parameters | Explanation |
-|------------------|---------------------------|---------------------------|-------------|
-| Slow/medium | TUs include a large number of 4×4 blocks; a handful of DST transforms are used. | Leave `--tu-intra-depth` and `--tu-inter-depth` at 1 (default) so the residual quad-tree can split into 4×4 TUs. Allow transform-skip for 4×4 TUs (`--tskip` remains disabled by default). Set `--max-tu-size 32` to match the hardware’s largest TU size. | This configuration permits 4×4 TUs and thus allows x265 to use DST (when beneficial) similarly to hardware slow/medium. |
-| Fast/ultrafast | 4×4 TUs are largely absent; DCT is used exclusively. | Use `--tu-intra-depth 1` and `--tu-inter-depth 1` to prevent splits beyond the CU depth, thereby avoiding 4×4 TUs. Set `--max-tu-size 16` if the hardware rarely uses 32×32 TUs. Disable transform skip (`--no-tskip`). | Preventing deeper TU splits eliminates 4×4 TUs and, by extension, DST transforms. Limiting the maximum TU size to 16 favours 8×8 and 16×16 TUs, matching the hardware fast/ultrafast profiles. Disabling transform skip ensures that DCT is always used for the remaining TU sizes. |
+On the transform type side, **NVENC hardware** uses **DCT exclusively** in **fast and ultrafast presets**, where **DST counts are 0**, and uses DST **only sparingly** in slow/medium (**117 instances**). This matches HEVC reference behavior, where **DST is used only for 4×4 luma TUs**. The strong reduction of 4×4 TUs in fast/ultrafast presets naturally results in zero DST usage.
 
-In addition, the `--rdpenalty` option can be used to discourage 32×32 TUs by applying a cost penalty or
-forcing a split. Setting `--rdpenalty 2` forces x265 not to use 32×32 intra TUs, which is beneficial
-when emulating NVENC fast/ultrafast.
+These observations are further corroborated by **TU Depth** statistics:
+
+* CU=64 is never used.
+* All 32×32 TUs stem from CU=32 at TU depth=0.
+* All 4×4 TUs arise from CU=8 at TU depth=1.
+* All 8×8 TUs in fast/ultrafast arise from CU=16 at TU depth=1.
+
+---
+
+### Parameter mapping (Revised and Verified)
+
+| **Hardware preset**  | **TU usage & transform type**                                                                                              | **Suggested x265 parameters**                                                                                                                                                                                                                    | **Explanation**                                                                                                                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Slow / Medium**    | High number of **4×4 TUs** (~2.48M); full TU size range used (up to 32×32); **DST used occasionally (117 instances)**      | - `--ctu 32` (to match CU size)<br> - Leave `--tu-intra-depth` and `--tu-inter-depth` at **default (1)**<br> - Keep `--tskip` **enabled (default)**<br> - Set `--max-tu-size 32`                                                                 | Allows the encoder to form 4×4 TUs (via CU=8 at depth=1) and access **DST** transforms when needed. The TU size cap of 32 aligns with hardware’s upper bound. TU depth 1 is sufficient to reach 4×4 from CU=8, no need to increase further.         |
+| **Fast / Ultrafast** | Strong reduction or absence of 4×4 TUs; dominant use of **8×8 (from CU16@depth=1)** and **16×16**; **DCT-only** transforms | - `--ctu 32`<br> - Set `--tu-intra-depth 1` and `--tu-inter-depth 1`<br> - **Optional**: `--max-tu-size 16` (to disfavor 32×32)<br> - **Optional**: `--no-tskip` (to enforce DCT-only usage, as NVENC doesn't use transform-skip in these modes) | Setting TU depth to 1 prevents 4×4 TUs, since no CU=8 is used in hardware fast/ultrafast. The encoder then favors 8×8 and 16×16 transforms. Disabling `tskip` removes any residual 4×4 TU + DST combinations. Capping TU size to 16 aligns with HW. |
+
+> 🔍 **Optional refinement:**
+> If strict mimicry of fast/ultrafast hardware presets is desired, add `--rdpenalty 2` to **discourage 32×32 intra TUs**, though 32×32 is still allowed in NVENC.
 
 ---
 
