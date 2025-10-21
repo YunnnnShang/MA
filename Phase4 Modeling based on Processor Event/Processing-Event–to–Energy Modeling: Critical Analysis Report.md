@@ -46,7 +46,7 @@
 
 ---
 
-## 3. Metrics (no abbreviations)
+## 3. Metrics 
 
 * **Coefficient of determination**: fraction of variance in measured energy explained by the model (higher is better).
 * **Root mean square error**: average absolute error in **energy units** (lower is better).
