@@ -1,236 +1,205 @@
-# 🧭 实验路线图（最终版）
+# 🧭 Experimental Roadmap (Final Integrated Version – Phase 4 & Phase 5)
 
-## 1. 实验目标（Objective）
+## 1. Objective
 
-本实验旨在：
+This research aims to establish a **processor-event-based energy modeling framework** for HEVC intra-coding by systematically bridging two complementary analysis layers:
 
-> 通过 Valgrind 工具分析 HEVC 软件编码器（x265）在不同滤波配置下（deblock/SAO）及不同编码预设下（fast–superfast）的处理器事件行为，并结合硬件实测能耗数据，建立基于处理器事件的能耗预测模型，比较两种滤波配置下的能耗与特征差异。
+1. **Phase 4 – Valgrind (Callgrind Simulation):**  
+   A deterministic, platform-independent simulation of instruction-level and cache behavior to capture algorithmic complexity.
 
-本实验主要回答两个问题：
+2. **Phase 5 – Perf (Hardware Performance Counters):**  
+   A hardware-validated measurement of real microarchitectural events to verify whether Valgrind-observed trends persist in physical CPUs.
 
-1. 滤波配置（Deblock/SAO）是否显著影响处理器级行为和能耗？
-2. 是否可以用处理器事件（PEs）准确预测不同配置下的能耗？
+Together, these phases address two core scientific questions:
 
----
-
-## 2. 实验设计（Design Overview）
-
-### 2.1 实验变量（Independent Variables）
-
-| 类别 | 项目 | 值 / 范围 | 说明 |
-|------|------|-----------|------|
-| 编码预设 | Preset | fast, faster, veryfast, superfast | 控制编码复杂度与速度 |
-| 滤波配置 | Config | 两种模式 | 见下 |
-| 量化参数 | QP | 22, 27, 32, 37 | 控制压缩强度 |
-| 分辨率 | Resolution | 2K, 4K | 保持一致场景对比 |
-| 帧数 | Frames | 130 | 固定帧数以便公平比较 |
-
-### 2.2 两种滤波配置（Configuration Modes）
-
-| 配置编号 | 参数设置 | 说明 |
-|-----------|----------|------|
-| **Config A** | `--no-deblock --sao` | 禁用 Deblocking 滤波，启用 SAO |
-| **Config B** | `--deblock --no-sao` | 启用 Deblocking 滤波，禁用 SAO |
-
-> 两组配置将在相同的视频、预设、QP 下分别运行各一次，以分析滤波器开关对 CPU 事件及能耗分布的影响。
+1. How do Deblocking and SAO filters influence processor-level behavior and energy efficiency?  
+2. Can software-visible processor events (PEs) reliably predict hardware energy consumption across simulation and real measurement domains?
 
 ---
 
-## 3. 实验环境（Experimental Environment）
+## 2. Experimental Design Overview
 
-| 项目 | 内容 |
-|------|------|
-| 计算平台 | FAU LNT Intel CPU Cluster |
-| 操作系统 | Linux（Slurm 作业调度系统） |
-| 主要工具 | x265, Valgrind 3.24.0, CMake, NASM |
-| 能耗数据 | 已有硬件能耗测量（slow preset 下）作为回归目标 |
-| 并行设置 | `--cpus-per-task=8`, `OMP_NUM_THREADS=8` 固定 |
+### 2.1 Independent Variables
+
+| Category | Parameter | Range / Levels | Description |
+|-----------|------------|----------------|--------------|
+| Encoding preset | `preset` | fast, faster, veryfast, superfast | Controls algorithmic complexity and speed |
+| Filter configuration | `config` | Default-like, Hardware-like | See § 2.2 |
+| Quantization parameter | `qp` | 22, 27, 32, 37 | Controls compression strength |
+| Resolution | `res` | 2K, 4K | Balanced visual content |
+| Frames per run | `frames` | 130 | Fixed for fair comparison |
+
+### 2.2 Filter Configurations
+
+| Label | Parameters | Description |
+|--------|-------------|-------------|
+| **Default-like** | `--deblock --no-sao` | x265 default behavior (Deblocking ON, SAO OFF) |
+| **Hardware-like** | `--no-deblock --sao` | Hardware-mimicking behavior (Deblocking OFF, SAO ON) |
+
+Both configurations were executed on identical videos, QPs, and presets, ensuring controlled isolation of filter effects.
 
 ---
 
-## 4. 实验流程（Procedure）
+## 3. Experimental Environment
 
-### 阶段 1：环境准备
-
-1. 安装 NASM（x265 优化）
-2. 编译 Valgrind（3.24.0）
-3. 构建 x265 编码器（开启 OpenMP，多线程）
-4. 验证单点运行（确保输出 callgrind 文件）
+| Item | Description |
+|------|--------------|
+| Platform | FAU LNT Intel CPU Cluster |
+| OS & Scheduler | Linux + Slurm |
+| Core tools | x265, Valgrind 3.24.0, Perf, CMake, NASM |
+| Target energy | Hardware encoder (NVENC, preset = slow) measured via power meter |
+| Parallel setup | `--cpus-per-task = 8`, `OMP_NUM_THREADS = 8` |
 
 ---
 
-### 阶段 2：编码 Profiling 采集（两轮）
+## 4. Procedure Overview
 
-每轮实验遍历以下参数：
+### Phase 4 – Valgrind (Callgrind Simulation)
 
-- `preset ∈ {fast, faster, veryfast, superfast}`
-- `QP ∈ {22, 27, 32, 37}`
-- `Resolution ∈ {2K, 4K}`
-- `Frames = 130`
+**Goal:** Capture deterministic instruction and cache behavior at the software level.
 
-每个组合生成一个独立的 Valgrind 输出文件。
-
-#### 轮次 1：Config A（no-deblock + sao）
+1. Build x265 with OpenMP support and run under Callgrind.
+2. Sweep across all (preset, QP, resolution) combinations.
+3. Generate `.out` files for both configurations.
 
 ```bash
+# Example (Hardware-like)
 valgrind --tool=callgrind \
-  --callgrind-out-file=callgrind_A_${preset}_${qp}_${seq}.out \
-  ./x265 --input ${seq_path} \
-         --input-res ${W}x${H} --frames 130 \
-         --preset ${preset} --qp ${qp} \
-         --keyint 1 --no-deblock --sao \
-         --output NUL
+  --callgrind-out-file=callgrind_HWlike_${preset}_${qp}_${seq}.out \
+  ./x265 --input ${seq_path} --input-res ${WxH} \
+         --frames 130 --preset ${preset} --qp ${qp} \
+         --keyint 1 --no-deblock --sao -o /dev/null
 ```
-#### 轮次 2：Config B（deblock + no-sao）
+4. Parse outputs via custom scripts to extract 13 key processor events (PEs):
+`Ir, Dr, Dw, I1mr, D1mr, D1mw, ILmr, DLmr, DLmw, Bc, Bcm, Bi, Bim.`
+5. Align each run with its corresponding hardware energy label
+`E_hw_slow` from the NVENC dataset using `(video_name, qp)` matching.
+
+### Phase 5 – Perf (HPC Measurement)
+
+**Goal:**  
+Measure real microarchitectural behavior and validate the Valgrind-derived conclusions under actual hardware execution.
+
+1. Use perf stat to record the 18-event “Perf Extended” set consistent with Kränzler et al., 2023:
 
 ```bash
-valgrind --tool=callgrind \
-  --callgrind-out-file=callgrind_B_${preset}_${qp}_${seq}.out \
-  ./x265 --input ${seq_path} \
-         --input-res ${W}x${H} --frames 130 \
-         --preset ${preset} --qp ${qp} \
-         --keyint 1 --deblock --no-sao \
-         --output NUL
+cache-misses, cache-references, instructions,
+L1-dcache-loads/misses, L1-icache-load-misses,
+LLC-loads/misses, LLC-stores/misses,
+branch-instructions, branch-misses, branch-loads/misses,
+dTLB-loads/misses, dTLB-stores/misses
 ```
-### 阶段 3：数据提取与整理
+2. Collect data on both Intel and AMD architectures.
+3. Merge hardware counters with the same energy label E_hw_slow.
+4. Compute averages by preset and configuration for microarchitectural comparison.
 
-使用 callgrind_annotate 或脚本自动解析输出：
 
-```bash
-callgrind_annotate callgrind_A_fast_qp27_4k.out > A_fast_qp27_4k.txt
+## 5. Data Structure
 
-```
+| Column          | Description                                  |
+|-----------------|----------------------------------------------|
+| `preset`, `qp`, `seq_name` | Experimental identifiers                  |
+| `Ir` – `Bim` or 18 Perf PEs | Processor events (Valgrind 13 / Perf 18) |
+| `E_hw_slow`     | Hardware energy (target label, J)            |
+| `config`        | Default-like / Hardware-like                 |
 
-提取以下 13 个关键处理器事件（PEs）：
-| 缩写               | 含义         | 对应硬件行为   |
-| ---------------- | ---------- | -------- |
-| Ir               | 已执行指令数     | CPU 工作量  |
-| Dr, Dw           | 数据读/写次数    | 内存带宽     |
-| I1mr, D1mr, D1mw | L1 缓存 miss | 一级缓存效率   |
-| ILmr, DLmr, DLmw | LL 缓存 miss | 末级缓存效率   |
-| Bc, Bi           | 分支指令/执行次数  | 程序控制流复杂度 |
-| Bcm, Bim         | 分支预测失败次数   | 分支预测效率   |
+All data were merged into master CSVs:  
+- `callgrind_summary_with_E_hw_slow.csv` (Phase 4)  
+- `perf_extended_summary_with_E_hw_slow.csv` (Phase 5)
 
-## 5. 数据结构（Data Structure）
+---
 
-最终整理后的数据表（DataFrame / CSV）结构如下：
-| 列名          | 含义                          |
-| ----------- | --------------------------- |
-| `index`     | 样本编号                        |
-| `preset`    | 编码预设（fast–superfast）        |
-| `qp`        | 量化参数                        |
-| `seq_name`  | 视频序列名                       |
-| `Ir`–`Bim`  | 13 项处理器事件                   |
-| `E_hw_slow` | 对应 slow preset 下的硬件能耗（目标变量） |
-| `config`    | 滤波配置编号（A/B）                 |
+## 6. Modeling and Evaluation
 
-示例行：
+### 6.1 Model Choice
 
-| index | preset | qp | seq_name     | Ir     | Dr     | Dw     | … | Bim   | E_hw_slow | config |
-| ----- | ------ | -- | ------------ | ------ | ------ | ------ | - | ----- | --------- | ------ |
-| 1     | fast   | 27 | Crosswalk_4k | 5.3e11 | 1.2e11 | 8.6e10 | … | 2.1e7 | 24.3      | A      |
-| 2     | fast   | 27 | Crosswalk_4k | 5.5e11 | 1.3e11 | 8.5e10 | … | 2.2e7 | 24.3      | B      |
-
-## 6. 建模与分析（Modeling and Analysis）
-
-### 6.1 模型选择
-
-采用 **XGBoost 回归模型** 建立能耗预测关系：
+The **baseline model** is **linear regression** (for interpretability and parity with prior work).  
+Non-linear models (XGBoost) are used only for auxiliary checks.
 
 \[
-\hat{E} = f_{\text{XGB}}(Ir, Dr, Dw, I1mr, D1mr, D1mw, ILmr, DLmr, DLmw, Bc, Bcm, Bi, Bim)
+\hat{E}_{hw} = \beta_0 + \sum_{i=1}^{n} \beta_i \cdot PE_i
 \]
 
-- **输入特征**：13 项 PEs  
-- **输出目标**：对应 slow 预设下的能耗数据 \(E_{hw, slow}\)  
-- **模型类型**：非线性梯度提升树（XGBoostRegressor）
+### 6.2 Training Strategy
 
-**示例参数：**
+- Train **separately per configuration** (Default-like vs Hardware-like).
+- **5-fold GroupKFold** (grouped by `seq_name`) to avoid leakage across frames of the same sequence.
+- Report:
+  - Mean Absolute Percentage Error (MAPE)
+  - Coefficient of determination (R²)
+  - Root Mean Squared Error (RMSE)
 
-```python
-xgb.XGBRegressor(
-    n_estimators=200,
-    max_depth=6,
-    learning_rate=0.05,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    reg_lambda=1.0
-)
-```
-### 6.2 模型训练策略
+### 6.3 Metrics and Thresholds
 
-- 按 **配置 (A/B)** 分组分别建模，比较两种滤波配置下的模型性能。  
-- 采用 **5 折交叉验证** 评估泛化能力。  
-- 计算平均误差率（Error Rate, 类似 MAPE）：  
-
-\[
-\text{Error Rate} = \frac{1}{N} \sum_i \left| \frac{\hat{E}_i - E_i}{E_i} \right|
-\]
-
-- 对比指标：  
-  - 平均误差率（Mean Error Rate）  
-  - R²（拟合优度）  
-  - 特征重要性（Feature Importance）
+| Metric | Target Value                                  | Interpretation        |
+|--------|-----------------------------------------------|-----------------------|
+| MAPE   | ≤ 5% (Valgrind) / ≤ 12% (Perf Hardware-like)  | Prediction accuracy   |
+| R²     | ≥ 0.90                                         | Model goodness-of-fit |
+| RMSE   | Reported in Joules                             | Scale-aware error     |
 
 ---
 
-### 6.3 分析方向
+## 7. Analysis Dimensions
 
-1. **模型预测性能**  
-   - 比较 Config A 与 Config B 的平均误差率；  
-   - 分析 fast–superfast 不同预设下的预测误差差异。  
+1. **Filter Configuration Effect**  
+   - Deblocking (Default-like) introduces control-flow irregularity (↑ `branch-misses`) and worsens locality (↑ `L1/LLC` misses).  
+   - SAO (Hardware-like) increases regular memory access but preserves **linear** energy scaling.
 
-2. **事件特征贡献度**  
-   - 提取 XGBoost 的 `feature_importances_`；  
-   - 观察哪些事件在不同滤波配置下影响最显著（如 cache miss 或 branch misprediction）。  
+2. **Preset Sensitivity**  
+   - Faster presets reduce total instructions yet often increase **miss ratios**, exposing memory bottlenecks.  
+   - *Superfast* shows the smallest PE counts overall **except** `D1mr`, which peaks—consistent with L1 pressure.
 
-3. **滤波配置差异**  
-   - 对比两组配置下的平均事件计数变化；  
-   - 判断 SAO 与 Deblock 的开启/关闭是否带来更高的内存访问或分支行为。  
-
----
-
-## 7. 实验结果预期（Expected Findings）
-
-- SAO 开启（Config A）预计增加 **内存读写量 (Dr/Dw)** 与 **缓存 miss**，因其像素邻域滤波需要更多数据访问；  
-- Deblock 开启（Config B）可能增加 **分支预测失败 (Bim)**，因其条件判断更多；  
-- 两组模型的总体预测误差率（Error Rate）预期在 **5%–8%**；  
-- XGBoost 模型能有效捕捉非线性特征交互（如 Dr × DLmw、Bc × Bim），显著优于线性回归；  
-- 特征重要性排序揭示能耗关键来源：  
-  - 高频特征：`Dr`, `DLmr`, `DLmw`, `Bcm`  
-  - 低频但高能耗特征：`Bim`, `ILmr`  
+3. **Cross-Phase Validation**  
+   - Valgrind and Perf align on direction and relative magnitude of filter-induced effects.  
+   - Deblock-driven **nonlinearity** emerges more strongly in Perf due to real pipeline effects (flushes, refills).
 
 ---
 
-## 8. 实验时间计划（Time Plan）
+## 8. Key Findings
 
-| 阶段 | 内容 | 预计时间 |
-|------|------|----------|
-| 环境搭建 | x265 + Valgrind 安装验证 | 0.5 天 |
-| Config A Profiling | 第一轮数据采集 | 1 天 |
-| Config B Profiling | 第二轮数据采集 | 1 天 |
-| 数据提取与整合 | callgrind → CSV 转换 + 能耗对齐 | 0.5 天 |
-| 建模与验证 | XGBoost 训练与误差分析 | 0.5 天 |
-| 报告与图表 | 可视化 + 结论总结 | 0.5 天 |
+| Configuration                              | Source     | MAPE (Linear) | R²     | Trend                                      |
+|--------------------------------------------|------------|---------------|--------|--------------------------------------------|
+| Hardware-like (SAO on, Deblock off)        | Valgrind   | < 5%          | > 0.95 | Smooth, linear energy–PE relationship      |
+| Default-like (Deblock on, SAO off)         | Valgrind   | ≈ 6–8%        | 0.90–0.94 | More irregular branch/memory behavior    |
+| Hardware-like                               | Perf       | ≈ 12%         | ≈ 0.95 | Higher predictability on real hardware     |
+| Default-like                                | Perf       | ≈ 30%         | ≈ 0.92 | Nonlinearity amplified by hardware effects |
 
----
-
-## 9. 结果展示建议（Visualization Plan）
-
-| 图表 | 内容 |
-|------|------|
-| **Error Rate vs Preset (A/B)** | 两组滤波配置的预测误差对比 |
-| **Predicted vs Measured** | 模型拟合散点对角图 |
-| **Feature Importance (XGBoost)** | 不同配置下事件贡献度排序 |
-| **Event Change (ΔPEs)** | 两组配置的平均事件增减热力图 |
-| **Energy Difference Bar** | Config A vs B 在 slow preset 下的能耗差异 |
+**Interpretation:**  
+Deblocking dominates energy variance via data-dependent branching and cache disruptions, while SAO remains computationally regular and thus more predictable.
 
 ---
 
-## 10. 实验结论（Expected Conclusion）
+## 9. Visualization Plan
 
-- SAO 与 Deblocking 的启用/禁用会显著改变 CPU 微结构行为；  
-- 处理器事件（PEs）与硬件能耗存在稳定的可学习关系；  
-- 树型模型（XGBoost）能有效捕捉非线性耦合，预测误差低；  
-- 基于 PEs 的能耗建模为编码器能耗优化提供了可解释路径；  
-- 可量化评估 SAO 与 Deblock 模块在能耗层面的相对代价。  
+| Figure                    | Description                                                    |
+|---------------------------|----------------------------------------------------------------|
+| *Error Rate vs Preset*    | MAPE across presets for both configurations                   |
+| *Predicted vs Measured*   | Scatter plots with y = x reference lines                      |
+| *Feature Importance*      | Relative weights (linear coefficients / XGB gain)             |
+| *ΔPE Heatmaps*            | Event-level differences (Hardware-like – Default-like)        |
+| *Energy Bar Charts*       | Mean `E_hw_slow` per preset and configuration                 |
+
+---
+
+## 10. Conclusion and Future Work (Phase 6 Perspective)
+
+### 10.1 Conclusions
+
+- The two-phase framework robustly links **algorithmic-level simulation** (Valgrind) with **microarchitectural-level measurement** (Perf).  
+- Processor events—especially `branch-misses` and `L1/LLC` misses—consistently explain the energy gap between filters.  
+- Linear regression achieves **interpretable** and **competitive** accuracy; non-linear effects are primarily tied to Deblocking.  
+- The **Hardware-like** configuration exhibits more stable, energy-proportional behavior, enabling stronger software→hardware mapping.
+
+### 10.2 Future Work – Potential Phase 6
+
+A natural continuation is **closed-loop validation** via **direct power measurement** (e.g., Intel RAPL, ZES LMG611), integrating:
+
+1. Valgrind instruction-level simulation →  
+2. Perf microarchitectural measurement →  
+3. Real power trace correlation.
+
+This would quantify residual bias, enable CPU–GPU–ASIC cross-validation, and support ratio-based features (IPC, miss-rate).  
+Fine-grained temporal profiling could further reveal transient power dynamics across encoder stages.
+
+---
+
