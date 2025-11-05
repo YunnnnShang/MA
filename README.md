@@ -1,62 +1,9 @@
-# 第一章 引言（Introduction）
+# Estimation of Hardware Encoder Energy Based on Software Encoder for HEVC All-Intra Coding
 
-## 1.1 研究背景
-随着超高清视频（Ultra-HD）、全景视频和智能安防等应用的快速发展，视频编解码技术成为多媒体系统中的关键模块。高效的视频编码标准（如H.265/HEVC）极大地提高了编码效率，然而，其复杂的算法结构也带来了显著的计算负担和能耗压力。尤其在边缘计算设备、移动终端、无人系统等资源受限场景中，视频编码模块往往成为系统整体能耗的瓶颈。因此，构建面向编码过程的能耗建模与分析方法，对于低功耗系统设计、硬件资源调度与能效优化具有重要意义。
+## Abschätzung des Energieverbrauchs von Hardware-Encodern basierend auf Software-Encodern für die HEVC All-Intra Kodierung
 
-在众多编码场景中，HEVC的**帧内编码（Intra Coding）**作为关键的I帧压缩技术，不仅承担着压缩首帧和场景切换关键帧的任务，还在低延迟和静态图像压缩中得到广泛应用。帧内编码具有计算强度高、空间预测复杂、块划分灵活等特点，其能耗特性比帧间编码更难建模。因此，对HEVC帧内编码过程进行能耗分析，具有理论挑战性与工程实用价值。
+In recent years, convenience of the Internet and portable devices has led to a significant increase in Internet video traffic. In addition, video compression methods have advanced considerably, especially with respect to compression efficiency, to reduce the required data traffic for video content transmission. While modern codecs have improved compression performance, the gains are at the cost of increased algorithmic complexity, resulting in higher energy demands. Furthermore, the global impact of energy consumption in video communications and the battery limitations of portable devices make the study of energy demands of video encoding an essential research area.
 
-目前已有部分研究对HEVC的软件编码器（如x264、x265）进行了能耗分析，尝试基于编码时间、处理器事件或视频内容特征构建功耗模型。然而，硬件编码器的能耗建模仍面临较大挑战：一方面，商用硬件编码器（如NVIDIA NVENC、Intel Quick Sync）大多为封闭黑盒结构，缺乏可直接访问的内部状态与能耗计数器；另一方面，现有建模方法往往需要复杂的底层硬件访问接口，难以在实际应用中部署。
-1.2 研究动机
+Typically, optimized software solutions, often based on reference software implementations are available soon after the video coding standards are finalized; while hardware implementations are developed much later, only after significant optimizations in software implementations. This makes it infeasible to evaluate the hardware complexity of new codecs and coding tools during the standardization process, as the hardware implementations are unavailable then, which poses a problem when the corresponding hardware implementations or its specific coding tools exhibit a higher energy demand later, limiting their support in the portable devices and negatively impacting the energy demand. Therefore, it is essential to develop models that can predict the complexity or energy demand of the hardware implementations based on the energy or complexity profiles of their software counterparts.
 
-为解决上述问题，本研究提出一种基于软件编码器特征的硬件能耗估算方法，尝试通过可观测的软件编码行为特征，推断硬件编码器在执行HEVC帧内编码任务时的系统能耗。研究以NVIDIA Jetson平台上的NVENC硬件编码器为目标，结合x265软件编码器产生的行为数据，构建一套软硬件能耗建模流程，旨在实现对黑盒硬件能耗的精确估算和行为解析。研究的核心动机包括：
-
-    满足边缘计算与移动设备对低功耗编码的迫切需求；
-
-    实现对黑盒硬件能耗的非侵入式建模与预测；
-
-    为未来编码器硬件架构设计与参数调优提供指导依据。
-
-1.3 研究目标
-
-本研究的核心目标是：构建一种基于x265软件编码特征的机器学习能耗建模框架，实现对Jetson平台NVENC硬件编码器在HEVC帧内编码任务下的能耗估算。具体目标包括：
-
-    从x265中提取与编码行为密切相关的关键特征，包括CU划分结构、帧内预测模式分布、残差信息、图像内容复杂度等；
-
-    利用Intel RAPL接口与LMG611精密功率分析仪，分别获取软件编码与硬件编码过程中的能耗数据；
-
-    构建基于XGBoost的回归模型，将软件特征映射至硬件能耗，目标为平均误差率控制在5%以内；
-
-    分析模型中各特征的重要性，揭示哪些编码行为对硬件能耗有显著影响；
-
-    评估模型在不同编码配置（QP、preset）、不同视频内容及分辨率下的泛化能力；
-
-    可视化软硬件之间的能耗变化趋势，分析它们的耦合特性。
-
-1.4 研究方法与技术路线
-
-本研究采用“软件行为建模 + 硬件功耗测量 + 机器学习回归分析”的技术路线。首先，通过x265编码日志与系统性能分析工具（如perf）提取关键特征；其次，使用真实平台采集能耗数据，构建数据集；最后，基于梯度提升树等机器学习模型进行建模、训练与评估，并通过SHAP等方法实现模型可解释性分析。整个建模框架具有如下优势：
-
-    不依赖硬件内部实现细节，适用于封闭平台；
-
-    支持对视频内容与编码配置的鲁棒建模；
-
-    可视化特征贡献，辅助软硬件协同优化。
-
-1.5 论文结构安排
-
-本论文结构安排如下：
-
-    第二章：相关工作
-    回顾视频编码能耗建模领域的研究进展，涵盖软件建模、硬件估算、机器学习应用等方向；
-
-    第三章：系统设计与特征提取
-    介绍建模流程、平台结构、特征设计与能耗测量方法；
-
-    第四章：能耗建模与实验分析
-    给出模型构建、实验配置、建模结果、误差分析、特征重要性等内容；
-
-    第五章：讨论与扩展分析
-    分析模型的泛化能力、稳定性、适用性，并讨论模型可迁移性与未来扩展；
-
-    第六章：结论与未来工作
-    总结论文贡献，提出未来可能的研究方向与应用扩展。
+To this end, the objective of this thesis is to model the encoding energy of a HEVC hardware (NVIDIA Jetson) encoder using its software counterpart (x265) for the All-Intra coding configuration. First, Ms. Shang shall compare the Rate-Distortion (RD) metrics between the software and the hardware implementations for the Constant Quantization Parameter (CQP) rate control method, and then identify the matching preset configurations between the two implementations. Next, Ms. Shang shall conduct energy measurements for the identified configurations. Subsequently, a model is proposed to predict the encoding energy of the hardware encoder based on the software encoder data for the identified configurations, and include model evaluation that includes the theoretical background, a RD analysis of the effect of coding energy, and the experimental methodology for the proposed estimation model.
