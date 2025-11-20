@@ -274,148 +274,110 @@ For each resolution `R` in `["270p", "360p", "720p", "1080p", "4K"]` **that actu
 
 ---
 
-## **4. Folder: `04_modeling_hw/`**
+📌 **hw_linear_model_summary.csv 数据如下（系统读取）**：
 
-*(NVIDIA Hardware-Only Energy Modeling)*
+| Model              |       R2 |    MAPE(%) | RMSE (J) |
+| ------------------ | -------: | ---------: | -------: |
+| Time_only          | 0.791697 |  51.987760 | 1.592292 |
+| BPP_only           | 0.058953 | 121.549491 | 3.384392 |
+| QP_only            | 0.000583 | 127.549707 | 3.487774 |
+| Resolution_px_only | 0.776287 |  52.929505 | 1.650140 |
+| Multi_feature      | 0.878789 |  41.431367 | 1.214637 |
 
-This folder contains all modeling results derived **exclusively from NVIDIA hardware encoder samples**
-(`encoder == "NVIDIA"`, 768 rows in the dataset).
+---
 
-All features used in this section are physically interpretable properties of the encoding task.
+## ✅ Section 4 — Hardware Energy Modeling Output Catalog
+
+📌 *All results here are generated exclusively from NVIDIA encoder samples (n = 768).*
 
 ---
 
 ### **4.1 `hw_linear_model_summary.csv`**
 
-**What it contains**
-A performance comparison of 5 linear regression models, each using a different subset of features.
+Performance statistics of all energy prediction models tested.
 
-**Columns**
+| Model                  | Input Features                       |         R² |  MAPE (%) |  RMSE (J) | Interpretation                          |
+| ---------------------- | ------------------------------------ | ---------: | --------: | --------: | --------------------------------------- |
+| **Time_only**          | Encoding time (`t_process_single_s`) | **0.7917** | **51.99** | **1.592** | Captures trend but large residual error |
+| **BPP_only**           | Bitrate per pixel (`bpp`)            |     0.0590 |    121.55 |     3.384 | Very weak predictor                     |
+| **QP_only**            | Quantization parameter (`qp`)        |     0.0006 |    127.55 |     3.488 | Essentially no correlation              |
+| **Resolution_px_only** | Pixel count (`width × height`)       |     0.7763 |     52.93 |     1.650 | Resolution matters, but not linear      |
+| **Multi_feature**      | Time + BPP + QP + Pixel count        | **0.8788** | **41.43** | **1.215** | Best linear model among tested          |
 
-* `Model` — feature set used
-* `R2` — coefficient of determination
-* `MAPE(%)` — Mean Absolute Percentage Error (%)
-* `RMSE` — Root Mean Squared Error (J)
+**Conclusion:**
 
-**Actual results**
-
-| Model                  |         R2 |   MAPE(%) |  RMSE (J) |
-| ---------------------- | ---------: | --------: | --------: |
-| Time_only              |     0.7917 |     51.99 |     1.592 |
-| BPP_only               |     0.0590 |    121.55 |     3.384 |
-| QP_only                |     0.0006 |    127.55 |     3.488 |
-| **Resolution_px_only** | **0.7763** | **52.93** | **1.650** |
-| **Multi_feature**      | **0.8788** | **41.43** | **1.215** |
-
-**Usage**
-
-* This file is the **main results table** for hardware energy modeling in the thesis.
-* It directly supports analytical claims such as:
-
-  > “Time and resolution strongly influence NVENC energy, while QP and bpp show minimal predictive power.”
+> Time and resolution dominate hardware energy behavior.
+> QP and BPP have little predictive value for NVENC energy.
 
 ---
 
 ### **4.2 `pred_Time_only.csv`**
 
-**Purpose**
-Quantifies the prediction error when **encoding time** (`t_process_single_s`) is the only feature.
+| Column           | Meaning                             |
+| ---------------- | ----------------------------------- |
+| `True_Energy(J)` | Ground truth measured NVIDIA energy |
+| `Pred_Energy(J)` | Prediction using only encoding time |
 
-**Content**
+**Based on summary:**
 
-* `True_Energy(J)`
-* `Pred_Energy(J)`
-
-**Interpretation**
-
-* Captures general trend, but high error → strong **unmodeled complexity variance**.
+* MAPE **51.99%** → large distribution gaps
+* Used to show **time ≠ full predictor** for hardware
 
 ---
 
 ### **4.3 `pred_BPP_only.csv`**
 
-**Purpose**
-Evaluates **bitrate density (bpp)** as a predictor.
+| Statistic |   Value |
+| --------- | ------: |
+| R²        |  0.0590 |
+| MAPE      | 121.55% |
+| RMSE      | 3.384 J |
 
-**Content**
+**Conclusion:**
 
-* `True_Energy(J)`
-* `Pred_Energy(J)`
-
-**Interpretation**
-
-* Very low R² & very high MAPE
-  → bpp **is not useful** for hardware energy prediction.
+> bpp is **not** meaningful for hardware energy estimation.
 
 ---
 
 ### **4.4 `pred_QP_only.csv`**
 
-**Purpose**
-Quantifies energy predictability using **QP alone**.
+| Statistic |   Value |
+| --------- | ------: |
+| R²        |  0.0006 |
+| MAPE      | 127.55% |
+| RMSE      | 3.488 J |
 
-**Content**
+**Conclusion:**
 
-* `True_Energy(J)`
-* `Pred_Energy(J)`
-
-**Interpretation**
-
-> “QP has negligible impact on NVENC energy.”
-> (R² ≈ 0 → essentially random with respect to energy.)
+> QP has **almost zero** explanatory power for NVENC energy.
 
 ---
 
 ### **4.5 `pred_Resolution_px_only.csv`**
 
-*(Replaces former “Resolution_only” entry)*
+| Statistic |   Value |
+| --------- | ------: |
+| R²        |  0.7763 |
+| MAPE      |  52.93% |
+| RMSE      | 1.650 J |
 
-**Feature definition**
+**Interpretation:**
 
-```
-resolution_pixels = width × height
-```
-
-Example mapping:
-
-| Resolution | resolution_pixels |
-| ---------- | ----------------: |
-| 270p       |           129,600 |
-| 720p       |           921,600 |
-| 1080p      |         2,073,600 |
-| 4K         |         8,294,400 |
-
-**Interpretation**
-
-* Resolution is a **primary factor**, but
-* Linear scaling with pixel count **does not fully capture** real NVENC energy behavior
-  (non-linear efficiency, pipeline utilization, power gating effects)
+* Resolution matters, but **pixel count alone is still insufficient**
+* Indicates **non-linear scaling** and **pipeline power efficiencies**
 
 ---
 
 ### **4.6 `pred_Multi_feature.csv`**
 
-**Feature set**
+| Statistic |       Value |
+| --------- | ----------: |
+| R²        |  **0.8788** |
+| MAPE      |  **41.43%** |
+| RMSE      | **1.215 J** |
 
-```
-[
-  t_process_single_s,
-  bpp,
-  qp,
-  resolution_pixels
-]
-```
+**Interpretation:**
 
-**Usage**
-
-* Best model among tested linear setups
-* Used for scatter plots of predicted vs. actual energy
-* Supports concluding statements:
-
-> “Pixel-based multi-feature linear modeling achieves noticeably lower error than any single-feature baseline.”
-
----
-
-## **Section 4 Summary Statement (can be copied into thesis)**
-
-> All regression results consistently indicate that NVENC energy is primarily determined by processing time and the amount of pixel data being processed, while quantization and bitrate parameters play only a minor role. The multi-feature linear model yields the best performance (R²≈0.88, MAPE≈41%), showing that a small, interpretable feature set can capture most but not all of the variability in hardware energy consumption.
+> The multi-feature model performs best among linear models,
+> but remaining error suggests the need for **non-linear modeling**
+> (e.g., tree-based regression) for higher precision.
