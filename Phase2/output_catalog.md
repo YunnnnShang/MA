@@ -276,13 +276,15 @@ For each resolution `R` in `["270p", "360p", "720p", "1080p", "4K"]` **that actu
 
 📌 **hw_linear_model_summary.csv 数据如下（系统读取）**：
 
-| Model              |       R2 |    MAPE(%) | RMSE (J) |
-| ------------------ | -------: | ---------: | -------: |
-| Time_only          | 0.791697 |  51.987760 | 1.592292 |
-| BPP_only           | 0.058953 | 121.549491 | 3.384392 |
-| QP_only            | 0.000583 | 127.549707 | 3.487774 |
-| Resolution_px_only | 0.776287 |  52.929505 | 1.650140 |
-| Multi_feature      | 0.878789 |  41.431367 | 1.214637 |
+| Model              | R2     | MAPE(%) | RMSE (J) |
+| ------------------ | ------ | ------- | -------- |
+| Time_only          | 0.7917 | 51.99   | 1.592    |
+| BPP_only           | 0.0590 | 121.55  | 3.384    |
+| QP_only            | 0.0006 | 127.55  | 3.488    |
+| Resolution_px_only | 0.7763 | 52.93   | 1.650    |
+| Time_Resolution_px | 0.8786 | 41.29   | 1.216    |
+| Multi_feature      | 0.8788 | 41.43   | 1.215    |
+
 
 ---
 
@@ -302,6 +304,7 @@ Performance statistics of all energy prediction models tested.
 | **BPP_only**           | Bitrate per pixel (`bpp`)            |     0.0590 |    121.55 |     3.384 | Very weak predictor                     |
 | **QP_only**            | Quantization parameter (`qp`)        |     0.0006 |    127.55 |     3.488 | Essentially no correlation              |
 | **Resolution_px_only** | Pixel count (`width × height`)       |     0.7763 |     52.93 |     1.650 | Resolution matters, but not linear      |
+| **Time_Resolution_px** | Pixel count (`width × height`)+Encoding time (`t_process_single_s`) |     0.8786 |     41.29 |     1.216 | Resolution matters, but not linear      |
 | **Multi_feature**      | Time + BPP + QP + Pixel count        | **0.8788** | **41.43** | **1.215** | Best linear model among tested          |
 
 **Conclusion:**
