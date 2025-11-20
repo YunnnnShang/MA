@@ -1,0 +1,61 @@
+config,feature_ablated,Linear_MAPE
+default,None (All Features),16.131076968944353
+default,All (Baseline),30.394454854328757
+default,instructions:u,15.974820980399867
+default,cycles:u,15.969119977844906
+default,branch_instructions:u,16.326937559199788
+default,branch_misses:u,16.28681131110733
+default,cache_references:u,15.893539792822429
+default,cache_misses:u,16.08146398898552
+default,L1_dcache_loads:u,16.115888216227127
+default,L1_dcache_load_misses:u,15.564301618895879
+default,L1_dcache_stores:u,16.0042284094552
+default,L1_icache_load_misses:u,15.69801509054397
+default,LLC_loads:u,16.049720888515534
+default,LLC_load_misses:u,16.132375166188755
+default,LLC_stores:u,15.833792241733166
+default,LLC_store_misses:u,16.110094980966966
+default,dTLB_loads:u,16.043953886046637
+default,dTLB_load_misses:u,16.062858833128686
+default,dTLB_stores:u,15.884827663924073
+default,dTLB_store_misses:u,15.804331979660475
+disfilter,None (All Features),14.48505773747217
+disfilter,All (Baseline),30.393942175076305
+disfilter,instructions:u,14.474680698384718
+disfilter,cycles:u,14.36031498210107
+disfilter,branch_instructions:u,14.914320448290827
+disfilter,branch_misses:u,14.324228981786453
+disfilter,cache_references:u,14.481346328444179
+disfilter,cache_misses:u,14.474771548094362
+disfilter,L1_dcache_loads:u,14.388296753538885
+disfilter,L1_dcache_load_misses:u,14.314507476338251
+disfilter,L1_dcache_stores:u,14.5341169468543
+disfilter,L1_icache_load_misses:u,14.388738782954768
+disfilter,LLC_loads:u,14.721557537055165
+disfilter,LLC_load_misses:u,14.271491678227314
+disfilter,LLC_stores:u,14.315087535304958
+disfilter,LLC_store_misses:u,14.430620960566698
+disfilter,dTLB_loads:u,14.407613216002943
+disfilter,dTLB_load_misses:u,14.451986099113325
+disfilter,dTLB_stores:u,14.447667058916993
+disfilter,dTLB_store_misses:u,14.380369858455383
+hwlike,None (All Features),14.756648811346892
+hwlike,All (Baseline),30.394454854328757
+hwlike,instructions:u,14.659731586604636
+hwlike,cycles:u,14.682282036355987
+hwlike,branch_instructions:u,15.119000385554878
+hwlike,branch_misses:u,15.063270389166226
+hwlike,cache_references:u,14.793347341465852
+hwlike,cache_misses:u,14.648543618833068
+hwlike,L1_dcache_loads:u,14.703744962082457
+hwlike,L1_dcache_load_misses:u,14.521336731780519
+hwlike,L1_dcache_stores:u,14.730460584896363
+hwlike,L1_icache_load_misses:u,14.500337101936159
+hwlike,LLC_loads:u,14.63281314629136
+hwlike,LLC_load_misses:u,14.732985857324394
+hwlike,LLC_stores:u,14.55871369329939
+hwlike,LLC_store_misses:u,14.684893807355587
+hwlike,dTLB_loads:u,14.787728204659834
+hwlike,dTLB_load_misses:u,14.686047603739134
+hwlike,dTLB_stores:u,14.761101378045533
+hwlike,dTLB_store_misses:u,14.554808711007277
