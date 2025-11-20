@@ -1,0 +1,4 @@
+config,Linear_MAPE,n,groups,cv
+default,10.09918166376048,352,22,5/5
+disfilter,11.257130855910443,352,22,5/5
+hwlike,11.0858409356142,352,22,5/5
