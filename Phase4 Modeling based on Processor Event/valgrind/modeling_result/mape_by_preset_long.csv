@@ -1,0 +1,13 @@
+config,preset,mape_linear,mape_xgb
+dis_filter,superfast,0.063673066,0.039694898
+dis_filter,faster,0.059570026,0.040059156
+dis_filter,fast,0.059290822,0.039436224
+dis_filter,veryfast,0.059247532,0.039391284
+hw-like,superfast,0.05897493,0.028070847
+hw-like,veryfast,0.056586102,0.032644432
+hw-like,fast,0.050942347,0.030478273
+hw-like,faster,0.047801845,0.024709847
+default,fast,0.046747011,0.026463208
+default,faster,0.045916312,0.026061247
+default,veryfast,0.045161152,0.024531326
+default,superfast,0.041016455,0.031838597
